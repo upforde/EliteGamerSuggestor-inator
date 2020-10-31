@@ -2,7 +2,8 @@
 import pandas as pd
 
 # Read the csv file with all the emails
-df = pd.read_csv('emails.csv')
+df = pd.read_csv('data/emails.csv')
+exclusions = pd.read_csv('data/exclusions.csv')['exclusions'].to_list()
 
 # Number of spam and ham emails in the dataset
 num_spam = df['label'].value_counts()[0]
@@ -10,7 +11,7 @@ num_ham = df['label'].value_counts()[1]
 
 # Dictionary with most often occuring words for spam and ham emails
 words_spam = {} 
-words_ham= {}
+words_ham = {}
 
 
 # Returns the entire dataframe
@@ -30,23 +31,32 @@ def num_words(index):
 
 
 # Data cleaning
-def clean_data():
-    return 0
+def clean_data(max_length = 3):
+    temp = ""
+    
+    for index, row in df.iterrows():
+        for word in str(row['email']).lower().split():            
+            if len(word) > max_length and (word not in exclusions):
+                temp = temp + word.lower() + " "
+        df.at[index, 'email'] = temp
+        temp = ""
 
 
 # Clears and then populates the dictionaries 
 def count_words():
+    clean_data()
+    
     words_ham.clear()
     words_spam.clear()
     
     # The function that does the counting
     def word_counter(email, words_dict):
-        for word in str(email).lower().split():
+        for word in str(email).split():
             if word in words_dict:
                 words_dict[word] = words_dict[word] + 1
             else:
                 words_dict[word] = 1
-    
+
     # Looping through each item in the emails dataset
     for index, row in df.iterrows():
         # Check the label first
@@ -58,10 +68,4 @@ def count_words():
             print("Wrong label used - " + str(row['label']) + " at index " + str(index) + ".  Ignoring it." )
 
             
-
-
-
-
-
-
 
