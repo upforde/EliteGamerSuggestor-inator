@@ -6,8 +6,9 @@ df = pd.read_csv('data/emails.csv')
 exclusions = pd.read_csv('data/exclusions.csv')['exclusions'].to_list()
 
 # Number of spam and ham emails in the dataset
-num_spam = df['label'].value_counts()[0]
-num_ham = df['label'].value_counts()[1]
+num_spam = df['label'].value_counts()[1]
+num_ham = df['label'].value_counts()[0]
+num_total = num_spam + num_ham
 
 # Dictionary with most often occuring words for spam and ham emails
 words_spam = {} 
