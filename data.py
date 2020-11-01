@@ -60,9 +60,9 @@ def count_words():
     # Looping through each item in the emails dataset
     for index, row in df.iterrows():
         # Check the label first
-        if row['label'] == 0: 
+        if row['label'] == 1: 
             word_counter(row['email'], words_spam )
-        elif row['label'] == 1:
+        elif row['label'] == 0:
             word_counter(row['email'], words_ham )
         else:
             print("Wrong label used - " + str(row['label']) + " at index " + str(index) + ".  Ignoring it." )
