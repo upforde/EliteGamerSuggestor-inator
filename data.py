@@ -19,6 +19,7 @@ exclusions = exclusions['exclusions'].to_list()
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
 num_ham = df['label'].value_counts()[1]
+num_total = num_spam + num_ham
 
 # Dictionary with most often occuring words for spam and ham emails
 # Consist of value-key pair word: total_used 
@@ -40,7 +41,6 @@ def get_row(index):
 def num_words(index):
     email = get_row(index)[0]
     return len(email.split())
-
 
 # Data cleaning is a preprocessing step that:
     # 1. Converts everything to lower case; 
