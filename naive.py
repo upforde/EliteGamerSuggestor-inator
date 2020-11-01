@@ -1,6 +1,7 @@
 # Importing the data module
 import data
 import numpy as np
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
 
 # Create a multiomail naive bayes item
