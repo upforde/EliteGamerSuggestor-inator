@@ -4,7 +4,7 @@ import nltk
 
 
 # TODO - test if this is required
-# nltk.download('wordnet')
+nltk.download('wordnet')
 
 # Read the csv file with all the emails
 
