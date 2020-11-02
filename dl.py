@@ -97,13 +97,14 @@ plt.grid()
 plt.show()
 
 ax= plt.subplot()
-sns.heatmap(cf_matrix, annot=True, ax = ax,cmap='Blues',fmt=''); #annot=True to annotate cells
+sns.heatmap(cf_matrix, annot=True, ax = ax,cmap='Blues',fmt='') #annot=True to annotate cells
 
 # labels, title and ticks
-ax.set_xlabel('Predicted labels');
-ax.set_ylabel('True labels'); 
-ax.set_title('Confusion Matrix'); 
-ax.xaxis.set_ticklabels(['Not Spam', 'Spam']); ax.yaxis.set_ticklabels(['Not Spam', 'Spam']);
+ax.set_xlabel('Predicted labels')
+ax.set_ylabel('True labels')
+ax.set_title('Confusion Matrix')
+ax.xaxis.set_ticklabels(['Not Spam', 'Spam'])
+ax.yaxis.set_ticklabels(['Not Spam', 'Spam'])
 
 y_predict  = [1 if o>0.5 else 0 for o in model.predict(x_test_features)]
 
