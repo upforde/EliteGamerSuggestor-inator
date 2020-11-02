@@ -1,17 +1,16 @@
 # Data retrieval
 import pandas as pd
-import nltk
+import nltk.stem 
 
 
 # TODO - test if this is required
 # nltk.download('wordnet')
 
 # Read the csv file with all the emails
-
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
 
-# Exclusions are a list of words that are excluded from the original data - these consist of stop words, articles, prepositions, etc.
+# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
 exclusions = pd.read_csv('data/exclusions.csv')
 # Convert into a list for faster processing down the line
 exclusions = exclusions['exclusions'].to_list()
@@ -48,25 +47,46 @@ def num_words(index):
     # 3. Removes words given in the exclusion list;
     # 4. Lemmatizes the words.
     
-def clean_data(max_length = 3):
+def clean_data(max_length = 3, lemmatize = False, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
+    stemmer = nltk.stem.PorterStemmer()
+    
     
     for index, row in df.iterrows():
-        for word in str(row['email']).lower().split():
-            lemma = lemmatizer.lemmatize(word)
+
+        # Lower case the entire email
+        email_lc = str(row['email']).lower()
+        
+        for word in email_lc.split():
+            # If the word passes the length check and is not in the exclustions list it is added back into the email
+            if len(word) > max_length and (word not in exclusions):
+                temp = temp + word + " "
+
+        # Lemmatize the email
+
+        if lemmatize == True:
+            temp = lemmatizer.lemmatize(temp)
+
+        # Extra step - stemming
+        if stem == True:
+            stem_temp = ""
+            for word in temp.split():
+                stem_temp = stem_temp + stemmer.stem(word) + " "
             
-            if len(lemma) > max_length and (lemma not in exclusions):
-                temp = temp + lemma + " "
-                
+            temp = stem_temp
+        
+
+        # Rewrite the original email 
         df.at[index, 'email'] = temp
         temp = ""
 
 
 # Clears and then populates the dictionaries 
-def count_words():
+def count_words(data_cleaning = True):
     
-    clean_data()
+    if data_cleaning == True:
+        clean_data()
     
     words_ham.clear()
     words_spam.clear()
