@@ -43,6 +43,61 @@ def remove_whitespace(word):
 def replace_newline(word):
     return word.replace('\n','')
 
+def clean_up_pipeline(sentence):
+    cleaning_utils = [remove_hyperlink,
+                      replace_newline,
+                      to_lower,
+                      remove_number,
+                      remove_punctuation,remove_whitespace]
+    for o in cleaning_utils:
+        sentence = o(sentence)
+    return sentence
+
+x_train = [clean_up_pipeline(o) for o in x_train]
+x_test = [clean_up_pipeline(o) for o in x_test]
+
+le = LabelEncoder()
+y_train = le.fit_transform(y_train.values)
+y_test = le.transform(y_test.values)
+
+## some config values 
+embed_size = 100 # how big is each word vector
+max_feature = 50000 # how many unique words to use (i.e num rows in embedding vector)
+max_len = 2000 # max number of words in a question to use
+
+tokenizer = Tokenizer(num_words=max_feature)
+
+tokenizer.fit_on_texts(x_train)
+
+x_train_features = np.array(tokenizer.texts_to_sequences(x_train))
+x_test_features = np.array(tokenizer.texts_to_sequences(x_test))
+x_train_features = pad_sequences(x_train_features,maxlen=max_len)
+x_test_features = pad_sequences(x_test_features,maxlen=max_len)
+
+# create the model
+embedding_vecor_length = 32
+
+model = tf.keras.Sequential()
+model.add(Embedding(max_feature, embedding_vecor_length, input_length=max_len))
+model.add(Bidirectional(tf.keras.layers.LSTM(64)))
+model.add(Dense(16, activation='relu'))
+model.add(Dropout(0.1))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+history = model.fit(x_train_features, y_train, batch_size=512, epochs=20, validation_data=(x_test_features, y_test))
+
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.grid()
+plt.show()
+
+ax= plt.subplot()
+# labels, title and ticks
 ax.set_xlabel('Predicted labels')
 ax.set_ylabel('True labels')
 ax.set_title('Confusion Matrix')
