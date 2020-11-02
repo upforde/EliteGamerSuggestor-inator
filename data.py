@@ -46,18 +46,20 @@ def num_words(index):
     # 2. Removes words shorter than max_length; 
     # 3. Removes words given in the exclusion list;
     # 4. Lemmatizes the words.
+    # 5. Stemming 
     
 def clean_data(max_length = 3, lemmatize = False, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
     
-    
+    # Loop through emails
     for index, row in df.iterrows():
 
         # Lower case the entire email
         email_lc = str(row['email']).lower()
         
+        # Split the email and loop through each word
         for word in email_lc.split():
             # If the word passes the length check and is not in the exclustions list it is added back into the email
             if len(word) > max_length and (word not in exclusions):
@@ -68,7 +70,7 @@ def clean_data(max_length = 3, lemmatize = False, stem = True):
         if lemmatize == True:
             temp = lemmatizer.lemmatize(temp)
 
-        # Extra step - stemming
+        # Stemming
         if stem == True:
             stem_temp = ""
             for word in temp.split():
@@ -110,4 +112,3 @@ def count_words(data_cleaning = True):
             print("Wrong label used - " + str(row['label']) + " at index " + str(index) + ".  Ignoring it." )
 
             
-
