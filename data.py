@@ -55,7 +55,7 @@ def num_words(index):
     # 4. Lemmatizes the words.
     # 5. Stemming 
     
-def clean_data(max_length = 3, lemmatize = False, stem = True):
+def clean_data(max_length = 3, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
@@ -73,11 +73,11 @@ def clean_data(max_length = 3, lemmatize = False, stem = True):
                 temp = temp + word + " "
 
         # Lemmatize
-        if lemmatize == True:
+        if lemmatize:
             temp = lemmatizer.lemmatize(temp)
 
         # Stemming
-        if stem == True:
+        if stem:
             stem_temp = ""
             for word in temp.split():
                 stem_temp = stem_temp + stemmer.stem(word) + " "
@@ -91,10 +91,10 @@ def clean_data(max_length = 3, lemmatize = False, stem = True):
 
 
 # Clears and then populates the dictionaries 
-def count_words(data_cleaning = True):
+def count_words(data_cleaning = True, lemmatize = True, stem = True):
     
-    if data_cleaning == True:
-        clean_data()
+    if data_cleaning:
+        clean_data(data_cleaning, lemmatize, stem)
     
     words_ham.clear()
     words_spam.clear()
