@@ -5,8 +5,8 @@ from nltk.corpus import stopwords
 
 
 # If any of the nltk libraries are not already downloaded, uncomment this
-# nltk.download('wordnet')
-# nltk.download('stopwords')
+#nltk.download('wordnet')
+#nltk.download('stopwords')
 
 # Read the csv file with all the emails
 # All email are read into a pandas dataframe
@@ -122,6 +122,6 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
 # The elements are lists with the word at index 0 and num of occurences at index 1
 # The list is ordered, so the first value is the most occured word
 def order_words():
-    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True) , sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
+    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True), sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
     
     
