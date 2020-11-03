@@ -68,5 +68,5 @@ learn_weights(weights, training_set, itr, lc)
 
 tp, tn, fp, fn = test_weights(weights, testing_set)
 
-print(f"True positives: {tp}\nTrue negatives: {tn}\nFalse positives: {fp}\nFalse negatives: {fn}")
+print(f"True positives: {tp}\nFalse positives: {fp}\nTrue negatives: {tn}\nFalse negatives: {fn}")
 
