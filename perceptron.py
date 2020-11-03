@@ -61,7 +61,7 @@ training_set = create_dictionary(x_train, y_train)
 testing_set = create_dictionary(x_test, y_test)
 
 weights = {}
-itr, lc = 100, 0.1
+itr, lc = 20, 0.1
 if len(sys.argv) >= 2: itr = int(sys.argv[1])
 if len(sys.argv) >= 3: lc = float(sys.argv[2])
 learn_weights(weights, training_set, itr, lc)
