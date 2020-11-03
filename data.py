@@ -1,20 +1,26 @@
 # Data retrieval
 import pandas as pd
-import nltk
+import nltk.stem 
+from nltk.corpus import stopwords
 
 
-# TODO - test if this is required
-nltk.download('wordnet')
+# If any of the nltk libraries are not already downloaded, uncomment this
+# nltk.download('wordnet')
+# nltk.download('stopwords')
 
 # Read the csv file with all the emails
-
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
 
-# Exclusions are a list of words that are excluded from the original data - these consist of stop words, articles, prepositions, etc.
+# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
 exclusions = pd.read_csv('data/exclusions.csv')
 # Convert into a list for faster processing down the line
 exclusions = exclusions['exclusions'].to_list()
+
+# The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
+stop_words = set(stopwords.words('english'))
+
+
 
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
@@ -47,26 +53,48 @@ def num_words(index):
     # 2. Removes words shorter than max_length; 
     # 3. Removes words given in the exclusion list;
     # 4. Lemmatizes the words.
+    # 5. Stemming 
     
-def clean_data(max_length = 3):
+def clean_data(max_length = 3, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
+    stemmer = nltk.stem.PorterStemmer()
     
+    # Loop through emails
     for index, row in df.iterrows():
-        for word in str(row['email']).lower().split():
-            lemma = lemmatizer.lemmatize(word)
+
+        # Lower case the entire email
+        email_lc = str(row['email']).lower()
+        
+        # Split the email and loop through each word
+        for word in email_lc.split():
+            # If the word passes the length check and is not in the exclustions list it is added back into the email
+            if len(word) > max_length and (word not in stop_words) and (word not in exclusions):
+                temp = temp + word + " "
+
+        # Lemmatize
+        if lemmatize:
+            temp = lemmatizer.lemmatize(temp)
+
+        # Stemming
+        if stem:
+            stem_temp = ""
+            for word in temp.split():
+                stem_temp = stem_temp + stemmer.stem(word) + " "
             
-            if len(lemma) > max_length and (lemma not in exclusions):
-                temp = temp + lemma + " "
-                
+            temp = stem_temp
+        
+
+        # Rewrite the original email 
         df.at[index, 'email'] = temp
         temp = ""
 
 
 # Clears and then populates the dictionaries 
-def count_words():
+def count_words(data_cleaning = True, lemmatize = True, stem = True):
     
-    clean_data()
+    if data_cleaning:
+        clean_data(data_cleaning, lemmatize, stem)
     
     words_ham.clear()
     words_spam.clear()
@@ -90,4 +118,10 @@ def count_words():
             print("Wrong label used - " + str(row['label']) + " at index " + str(index) + ".  Ignoring it." )
 
             
-
+# Orders the words and return an ordered list 
+# The elements are lists with the word at index 0 and num of occurences at index 1
+# The list is ordered, so the first value is the most occured word
+def order_words():
+    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True) , sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
+    
+    
