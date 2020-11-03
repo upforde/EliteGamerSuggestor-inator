@@ -16,6 +16,8 @@ print(prob_spam)
 
 df = data.get_data()
 
+
+
 #print(df.head)
 
 #Removes stop words
@@ -23,6 +25,7 @@ vectorizer = CountVectorizer(stop_words='english')
 
 #Create a vectorization from all the content of email coloumn
 all_features = vectorizer.fit_transform(df['email'].apply(lambda x: np.str_(x)))
+
 
 #Get possible labels
 labels = df['label'].apply(lambda x: np.str_(x))
@@ -38,6 +41,7 @@ X_train, X_test, y_train, y_test = train_test_split(all_features, labels, test_s
 print(X_train.shape, X_test.shape, all_features.shape)
 
 
+print(all_features.vocabulary_)
 
 #Use all_features and X_train like this:
 
