@@ -1,10 +1,12 @@
 # Data retrieval
 import pandas as pd
 import nltk.stem 
+from nltk.corpus import stopwords
 
 
-# TODO - test if this is required
+# If any of the nltk libraries are not already downloaded, uncomment this
 # nltk.download('wordnet')
+# nltk.download('stopwords')
 
 # Read the csv file with all the emails
 # All email are read into a pandas dataframe
@@ -14,6 +16,11 @@ df = pd.read_csv('data/emails.csv')
 exclusions = pd.read_csv('data/exclusions.csv')
 # Convert into a list for faster processing down the line
 exclusions = exclusions['exclusions'].to_list()
+
+# The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
+stop_words = set(stopwords.words('english'))
+
+
 
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
@@ -48,7 +55,7 @@ def num_words(index):
     # 4. Lemmatizes the words.
     # 5. Stemming 
     
-def clean_data(max_length = 3, lemmatize = False, stem = True):
+def clean_data(max_length = 3, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
@@ -62,16 +69,15 @@ def clean_data(max_length = 3, lemmatize = False, stem = True):
         # Split the email and loop through each word
         for word in email_lc.split():
             # If the word passes the length check and is not in the exclustions list it is added back into the email
-            if len(word) > max_length and (word not in exclusions):
+            if len(word) > max_length and (word not in stop_words) and (word not in exclusions):
                 temp = temp + word + " "
 
-        # Lemmatize the email
-
-        if lemmatize == True:
+        # Lemmatize
+        if lemmatize:
             temp = lemmatizer.lemmatize(temp)
 
         # Stemming
-        if stem == True:
+        if stem:
             stem_temp = ""
             for word in temp.split():
                 stem_temp = stem_temp + stemmer.stem(word) + " "
@@ -85,10 +91,10 @@ def clean_data(max_length = 3, lemmatize = False, stem = True):
 
 
 # Clears and then populates the dictionaries 
-def count_words(data_cleaning = True):
+def count_words(data_cleaning = True, lemmatize = True, stem = True):
     
-    if data_cleaning == True:
-        clean_data()
+    if data_cleaning:
+        clean_data(data_cleaning, lemmatize, stem)
     
     words_ham.clear()
     words_spam.clear()
@@ -112,3 +118,10 @@ def count_words(data_cleaning = True):
             print("Wrong label used - " + str(row['label']) + " at index " + str(index) + ".  Ignoring it." )
 
             
+# Orders the words and return an ordered list 
+# The elements are lists with the word at index 0 and num of occurences at index 1
+# The list is ordered, so the first value is the most occured word
+def order_words():
+    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True) , sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
+    
+    

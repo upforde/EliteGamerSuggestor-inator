@@ -1,21 +1,28 @@
 # Importing the data module
 import data
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
-data.count_words()
+# sklearn library
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-words_ham = sorted(data.words_ham.items(), key=lambda x: x[1], reverse = True)
-words_spam = sorted(data.words_spam.items(), key=lambda x: x[1], reverse = True)
+from sklearn import svm
 
+data.count_words(True, True, True)
 
-print("Top Ham Words: ")
+words_ham, words_spam = data.order_words()
 
-for i in range(1,100):
-    print(str(i) + ".   " + words_ham[i][0] + " - " + str(words_ham[i][1]) )
-    
-    
-print("\nTop Spam Words: \n")
+if True:
 
-for i in range(1,100):
-    print(str(i) + ".   " + words_spam[i][0] + " - " + str(words_spam[i][1]))
+    print("Top Ham Words: ")
+    print("Total number of extracted ham words: " + str(len(words_ham)))
+    for i in range(1,100):
+        print(str(i) + ".   " + words_ham[i][0] + " - " + str(words_ham[i][1]) )
+        
+    print("\nTop Spam Words: \n")
+    print("Total number of extracted spam words: " + str(len(words_spam)))
+    for i in range(1,100):
+        print(str(i) + ".   " + words_spam[i][0] + " - " + str(words_spam[i][1]))
+
