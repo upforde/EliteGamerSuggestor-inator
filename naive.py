@@ -19,16 +19,11 @@ print(prob_spam)
 
 df = data.get_data()
 
-
-
-#print(df.head)
-
 #Removes stop words
 vectorizer = CountVectorizer(stop_words='english')
 
 #Create a vectorization from all the content of email coloumn
 all_features = vectorizer.fit_transform(df['email'].apply(lambda x: np.str_(x)))
-
 
 #Get possible labels
 labels = df['label'].apply(lambda x: np.str_(x))
@@ -39,11 +34,8 @@ labels = df['label'].apply(lambda x: np.str_(x))
 #Split training data
 X_train, X_test, y_train, y_test = train_test_split(all_features, labels, test_size=0.33, random_state=50)
 
-
 #Amount of training data, test/validation data, and combined e-mails and counted words
 print(X_train.shape, X_test.shape, all_features.shape)
-
-#Use all_features and X_train like this:
 
 #Instantiate methods through scikit
 modelMNB = MultinomialNB()
