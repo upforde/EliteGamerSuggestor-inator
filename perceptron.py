@@ -1,4 +1,4 @@
-import data, re, string, collections
+import data, sys
 import numpy as np
 from sklearn.model_selection import train_test_split
 
@@ -11,7 +11,8 @@ def create_dictionary(x, y):
             dictionary.update({x[i]: y[i]})
     return dictionary
 
-def learn_weights(weights, training_set, num_iterations = 100, learning_constant = 0.1):
+def learn_weights(weights, training_set, num_iterations, learning_constant):
+    print(f"Iterating {num_iterations} times with a learning constant of {learning_constant}")
     for i in range(num_iterations):
         for email in training_set.keys():
             weight_sum = 0.0
@@ -60,7 +61,10 @@ training_set = create_dictionary(x_train, y_train)
 testing_set = create_dictionary(x_test, y_test)
 
 weights = {}
-learn_weights(weights, training_set, 100)
+itr, lc = 100, 0.1
+if len(sys.argv) >= 2: itr = int(sys.argv[1])
+if len(sys.argv) >= 3: lc = float(sys.argv[2])
+learn_weights(weights, training_set, itr, lc)
 
 tp, tn, fp, fn = test_weights(weights, testing_set)
 
