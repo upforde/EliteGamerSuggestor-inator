@@ -25,6 +25,7 @@ stop_words = set(stopwords.words('english'))
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
 num_ham = df['label'].value_counts()[1]
+num_total = num_ham + num_spam
 
 # Dictionary with most often occuring words for spam and ham emails
 # Consist of value-key pair word: total_used 
