@@ -3,7 +3,6 @@ import pandas as pd
 import nltk.stem 
 from nltk.corpus import stopwords
 
-
 # If any of the nltk libraries are not already downloaded, uncomment this
 #nltk.download('wordnet')
 #nltk.download('stopwords')
@@ -12,7 +11,7 @@ from nltk.corpus import stopwords
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
 
-# Exclusions are a list of words that are removed from the original data - the artifacts of pre processing
+# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
 exclusions = pd.read_csv('data/exclusions.csv')
 # Convert into a list for faster processing down the line
 exclusions = exclusions['exclusions'].to_list()
@@ -20,10 +19,11 @@ exclusions = exclusions['exclusions'].to_list()
 # The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
 stop_words = set(stopwords.words('english'))
 
+
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
 num_ham = df['label'].value_counts()[1]
-num_total = num_spam + num_ham
+num_total = num_ham + num_spam
 
 # Dictionary with most often occuring words for spam and ham emails
 # Consist of value-key pair word: total_used 
@@ -39,6 +39,7 @@ def get_data():
 # Returns a tuple with the email and its label at the index
 def get_row(index):
     return df.at[index, 'email'], df.at[index, 'label']
+
 
 
 # Returns num of words in an email at given index
@@ -91,7 +92,6 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
         df.at[index, 'email'] = temp
         temp = ""
 
-
 # Clears and then populates the dictionaries 
 def count_words(data_cleaning = True, lemmatize = True, stem = True):
     
@@ -124,6 +124,6 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
 # The elements are lists with the word at index 0 and num of occurences at index 1
 # The list is ordered, so the first value is the most occured word
 def order_words():
-    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True), sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
+    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True) , sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
     
     
