@@ -20,11 +20,10 @@ exclusions = exclusions['exclusions'].to_list()
 # The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
 stop_words = set(stopwords.words('english'))
 
-
-
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
 num_ham = df['label'].value_counts()[1]
+num_total = len(df)
 
 # Dictionary with most often occuring words for spam and ham emails
 # Consist of value-key pair word: total_used 
@@ -55,7 +54,7 @@ def num_words(index):
     # 4. Lemmatizes the words.
     # 5. Stemming 
     
-def clean_data(max_length = 3, lemmatize = True, stem = True):
+def clean_data(max_length = 1, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
@@ -74,7 +73,13 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
 
         # Lemmatize
         if lemmatize:
-            temp = lemmatizer.lemmatize(temp)
+            # temp = lemmatizer.lemmatize(temp)
+            lemma_temp = ""
+
+            for word in temp.split():
+                lemma_temp = lemma_temp + lemmatizer.lemmatize(word) + " "
+            
+            temp = lemma_temp
 
         # Stemming
         if stem:
@@ -83,7 +88,6 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
                 stem_temp = stem_temp + stemmer.stem(word) + " "
             
             temp = stem_temp
-        
 
         # Rewrite the original email 
         df.at[index, 'email'] = temp
