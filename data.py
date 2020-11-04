@@ -5,14 +5,14 @@ from nltk.corpus import stopwords
 
 
 # If any of the nltk libraries are not already downloaded, uncomment this
-# nltk.download('wordnet')
-# nltk.download('stopwords')
+#nltk.download('wordnet')
+#nltk.download('stopwords')
 
 # Read the csv file with all the emails
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
 
-# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
+# Exclusions are a list of words that are removed from the original data - the artifacts of pre processing
 exclusions = pd.read_csv('data/exclusions.csv')
 # Convert into a list for faster processing down the line
 exclusions = exclusions['exclusions'].to_list()
@@ -23,7 +23,7 @@ stop_words = set(stopwords.words('english'))
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
 num_ham = df['label'].value_counts()[1]
-num_total = len(df)
+num_total = num_spam + num_ham
 
 # Dictionary with most often occuring words for spam and ham emails
 # Consist of value-key pair word: total_used 
@@ -41,11 +41,10 @@ def get_row(index):
     return df.at[index, 'email'], df.at[index, 'label']
 
 
-# Just for fun, returns num of words in an email at given index
+# Returns num of words in an email at given index
 def num_words(index):
     email = get_row(index)[0]
     return len(email.split())
-
 
 # Data cleaning is a preprocessing step that:
     # 1. Converts everything to lower case; 
@@ -54,7 +53,7 @@ def num_words(index):
     # 4. Lemmatizes the words.
     # 5. Stemming 
     
-def clean_data(max_length = 1, lemmatize = True, stem = True):
+def clean_data(max_length = 3, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
@@ -73,9 +72,7 @@ def clean_data(max_length = 1, lemmatize = True, stem = True):
 
         # Lemmatize
         if lemmatize:
-            # temp = lemmatizer.lemmatize(temp)
             lemma_temp = ""
-
             for word in temp.split():
                 lemma_temp = lemma_temp + lemmatizer.lemmatize(word) + " "
             
@@ -88,6 +85,7 @@ def clean_data(max_length = 1, lemmatize = True, stem = True):
                 stem_temp = stem_temp + stemmer.stem(word) + " "
             
             temp = stem_temp
+        
 
         # Rewrite the original email 
         df.at[index, 'email'] = temp
@@ -126,6 +124,6 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
 # The elements are lists with the word at index 0 and num of occurences at index 1
 # The list is ordered, so the first value is the most occured word
 def order_words():
-    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True) , sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
+    return sorted(words_ham.items(), key=lambda x: x[1], reverse = True), sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
     
     
