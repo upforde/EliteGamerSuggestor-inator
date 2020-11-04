@@ -1,6 +1,9 @@
 import data, sys
 import numpy as np
 from sklearn.model_selection import train_test_split
+import pandas as pd
+import seaborn as sn
+import matplotlib.pyplot as plt
 
 #------------------ function definitions ------------------
 # Function that merges the email and lable tuples into a dictionary
@@ -90,13 +93,30 @@ testing_set = create_dictionary(x_test, y_test)
 # The weight dictionary, as well as the iteration nummber and the learning 
 # constant are instanciated, before being sent into the learn_weights function
 weights = {}
+# Setting the training parameters to be 20 iterations and a learning constant 
+# of 0.1 by default. These may be changed by providing them when starting the 
+# python script
 itr, lc = 20, 0.1
 if len(sys.argv) >= 2: itr = int(sys.argv[1])
 if len(sys.argv) >= 3: lc = float(sys.argv[2])
+
+# Running the training algorithm with the provided parameters.
 learn_weights(weights, training_set, itr, lc)
 
 # The test function returns the four values ov a confusion matrix
 tp, tn, fp, fn = test_weights(weights, testing_set)
 
-print(f"True positives: {tp}\nFalse positives: {fp}\nTrue negatives: {tn}\nFalse negatives: {fn}")
+# Calculating the accuracy, sensitivity and specificity of the method
+acc = int((tp+tn)/(tp+tn+fp+fn)*100)
+sens = tp/(tp+fn)
+spec = fp/(fp+tn)
 
+# Printing the data to terminal
+print(f"Accuracy of the model: {acc}%")
+print(f"Sensitivity: {sens}")
+print(f"Specificity: {spec+1}")
+
+# Plotting the confusion matrix
+df_cm = pd.DataFrame([[tp, fp],[fn, tn]], index = ["Real Ham", "Real Spam"], columns = ["Guessed Ham", "Guessed Spam"])
+sn.heatmap(df_cm, annot=True, fmt="d", cmap=sn.color_palette("rocket_r", as_cmap=True))
+plt.show()
