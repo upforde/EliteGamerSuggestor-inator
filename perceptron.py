@@ -193,7 +193,7 @@ fp_rate = fp/(fp+tn)
 # Printing the data to terminal
 print("Accuracy of the model at threshold 0: %.1f" % acc + "%")
 print("True positive rate: %.2f" % tp_rate)
-print("False positive rate: %.2f" % fp_rate)
+print("False positive rate: %.2f\n" % fp_rate)
 
 # Plotting the confusion matrix of a perceptron with the threshold set to 0
 plot_cm([[tp, fp],[fn, tn]])
