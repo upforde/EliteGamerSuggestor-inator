@@ -12,15 +12,13 @@ from nltk.corpus import stopwords
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
 
-# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
+# Exclusions are a list of words that are removed from the original data - the artifacts of pre processing
 exclusions = pd.read_csv('data/exclusions.csv')
 # Convert into a list for faster processing down the line
 exclusions = exclusions['exclusions'].to_list()
 
 # The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
 stop_words = set(stopwords.words('english'))
-
-
 
 # Number of spam and ham emails in the dataset for easy retrieval
 num_spam = df['label'].value_counts()[0]
@@ -43,7 +41,7 @@ def get_row(index):
     return df.at[index, 'email'], df.at[index, 'label']
 
 
-# Just for fun, returns num of words in an email at given index
+# Returns num of words in an email at given index
 def num_words(index):
     email = get_row(index)[0]
     return len(email.split())
@@ -74,7 +72,11 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
 
         # Lemmatize
         if lemmatize:
-            temp = lemmatizer.lemmatize(temp)
+            lemma_temp = ""
+            for word in temp.split():
+                lemma_temp = lemma_temp + lemmatizer.lemmatize(word) + " "
+            
+            temp = lemma_temp
 
         # Stemming
         if stem:
