@@ -3,10 +3,9 @@ import pandas as pd
 import nltk.stem 
 from nltk.corpus import stopwords
 
-
 # If any of the nltk libraries are not already downloaded, uncomment this
-# nltk.download('wordnet')
-# nltk.download('stopwords')
+#nltk.download('wordnet')
+#nltk.download('stopwords')
 
 # Read the csv file with all the emails
 # All email are read into a pandas dataframe
@@ -19,7 +18,6 @@ exclusions = exclusions['exclusions'].to_list()
 
 # The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
 stop_words = set(stopwords.words('english'))
-
 
 
 # Number of spam and ham emails in the dataset for easy retrieval
@@ -43,11 +41,11 @@ def get_row(index):
     return df.at[index, 'email'], df.at[index, 'label']
 
 
-# Just for fun, returns num of words in an email at given index
+
+# Returns num of words in an email at given index
 def num_words(index):
     email = get_row(index)[0]
     return len(email.split())
-
 
 # Data cleaning is a preprocessing step that:
     # 1. Converts everything to lower case; 
@@ -75,7 +73,11 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
 
         # Lemmatize
         if lemmatize:
-            temp = lemmatizer.lemmatize(temp)
+            lemma_temp = ""
+            for word in temp.split():
+                lemma_temp = lemma_temp + lemmatizer.lemmatize(word) + " "
+            
+            temp = lemma_temp
 
         # Stemming
         if stem:
@@ -89,7 +91,6 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
         # Rewrite the original email 
         df.at[index, 'email'] = temp
         temp = ""
-
 
 # Clears and then populates the dictionaries 
 def count_words(data_cleaning = True, lemmatize = True, stem = True):
