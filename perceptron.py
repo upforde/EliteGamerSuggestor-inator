@@ -15,8 +15,10 @@ def create_dictionary(x, y):
     return dictionary
 
 # Function for perceptron training
-def learn_weights(weights, training_set, num_iterations, learning_constant):
-    print(f"Iterating {num_iterations} times with a learning constant of {learning_constant}")
+def learn_weights(weights, training_set, num_iterations, learning_constant, threshold = 0):
+    print(f"The training iterates {num_iterations} times with a learning constant of {learning_constant}\n")
+    least_sum = float('inf')
+    most_sum = float('-inf')
     # Iterating the weight adjustment process
     for i in range(num_iterations):
         # For each instance in the training set
@@ -77,6 +79,27 @@ def test_weights(weights, testing_set):
             if guess == 0: fp += 1
             else: fn += 1
     return tp, tn, fp, fn
+
+# Function to set the iteration and learning constant parameters
+def set_params():
+    # Setting the training parameters to be 20 iterations and a learning constant 
+    # of 0.1 by default. These may be changed by providing them when starting the 
+    # python script
+    itr, lc = 20, 0.1
+    if len(sys.argv) >= 2: itr = int(sys.argv[1])
+    if len(sys.argv) >= 3: lc = float(sys.argv[2])
+    return itr, lc
+
+def plot_cm(cm):
+    df_cm = pd.DataFrame(cm, index = ["Real Ham", "Real Spam"], columns = ["Guessed Ham", "Guessed Spam"])
+    sn.heatmap(df_cm, annot=True, fmt="d", cmap=sn.color_palette("rocket_r", as_cmap=True))
+    plt.show()
+
+def plot_roc(num_points, lowest_threshold, highest_threshold):
+    print("Creating the ROC graph. This may take a while...")
+    weights = {}
+    itr, lc = set_params()
+
 
 #-------------------- running the code --------------------
 # Getting the dataset from data.py
