@@ -9,6 +9,7 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
+import matplotlib.pyplot as plt
 
 # Create a multiomail naive bayes item
 # Feed the naive bayes item top used words from each classification
