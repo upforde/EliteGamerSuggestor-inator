@@ -7,6 +7,7 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score, roc_curve
 import matplotlib.pyplot as plt
+from scipy.sparse import csr_matrix
 
 # Probablity of Spam
 prob_spam = data.num_spam / data.num_total
@@ -16,7 +17,7 @@ dfcleaned = data.get_data()
 
 df = dfcleaned.copy()
 
-data.clean_data()
+#data.clean_data()
 
 
 # Removes stop words
@@ -29,41 +30,53 @@ all_features_cleaned = vectorizer.fit_transform(dfcleaned['email'].apply(lambda 
 # Get possible labels
 labels = df['label'].apply(lambda x: np.str_(x))
 
-print(all_features)
-#Separates mail content and indexes it with its id for email, 3000
+# LEGACY : Never used.
+# Check if object is a float or not.
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
-separated = df['email']
-print(separated)
-print(type(separated))
+# LEGACY : Redundant.
+# Create a dictionary of all words that exists in our dataframe. 
+def makeDict(df):
+    dictionary = []
+    for tuples in df.itertuples():
+        content = tuples[1]
+        if is_number(content):
+            content = str(content)
+        content = content.split()
+        dictionary += content
+        dictionary = list(dict.fromkeys(dictionary))
+    return dictionary
 
-
-"""
-for word in str(email).split():
-            if word in words_dict:
-                words_dict[word]= words_dict[word] + 1
-            else:
-                words_dict[word] = 1
-"""
-
+# LEGACY : Useless.
+# Manual feature extraction. Lacks major benefits such as parallel processing. Opted into scikit CountVectorizer for numerous reasons.
+# Not even sure this one works...
 def feature_extraction(df):
-    data.count_words(False, False, False)
-    feature_matrix = np.zeros((data.num_total, len(data.words_ham) + len(data.words_ham)))
-    all_words = []
-    for index, row in df.iterrows():
-        for content in row['email']:
-            words = content.split()
-            all_words += words
-            for word in all_words:
-                for wordIndex in range(len(all_words)):
-                    feature_matrix[index,wordIndex] = all_words.count(word)
+    data.count_words(True, False, False)
+    feature_matrix = np.zeros((data.num_total, len(data.words)))
+    for tuples in df.itertuples():
+        all_words = []
+        content = tuples[1]
+        if is_number(content):
+            content = str(content)
+        content = content.split()
+        all_words.extend(content)
+        for word in all_words:
+            for counter, value in enumerate(data.words.keys()):
+                if value == word:
+                    feature_matrix[tuples[0], counter] = all_words.count(word)
     return feature_matrix
 
-print(feature_extraction(df))
 
-"""
-# Split training data
+# Split training data and cleaned training data.
 X_train, X_test, y_train, y_test = train_test_split(all_features, labels, test_size=0.33, random_state=50)
+
 X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(all_features_cleaned, labels, test_size=0.33, random_state=50)
+
 
 # Amount of training data, test/validation data, and combined e-mails and counted words
 print("Original data features")
@@ -71,19 +84,19 @@ print(X_train.shape, X_test.shape, all_features.shape)
 print("Cleaned data features")
 print(X_train_c.shape, X_test_c.shape, all_features_cleaned.shape)
 
-# Instantiate methods through scikit
+# Instantiate methods to be used.
 modelMNB = MultinomialNB()
 modelSVM = LinearSVC(max_iter=10000)
 modelBNB = BernoulliNB(alpha = 1.0)
 modelGNB = GaussianNB()
 
-# Instantiate methods through scikit for cleaned data
+# Instantiate methods for cleaned data.
 modelMNBc = MultinomialNB()
 modelSVMc = LinearSVC(max_iter=10000)
 modelBNBc = BernoulliNB(alpha = 1.0)
 modelGNBc = GaussianNB()
 
-# Fit the model using our features.
+# Fit the model using our data.
 modelMNB.fit(X_train, y_train)
 modelSVM.fit(X_train, y_train)
 modelBNB.fit(X_train, y_train)
@@ -96,19 +109,19 @@ modelBNBc.fit(X_train_c, y_train_c)
 modelGNBc.fit(X_train_c.todense(), y_train_c)
 
 
-# Predict classification using our test data
+# Predict classification using our test data.
 resultMNB = modelMNB.predict(X_test)
 resultSVM = modelSVM.predict(X_test)
 resultBNB = modelBNB.predict(X_test)
 resultGNB = modelGNB.predict(X_test.todense())
 
-# Predict classification using our cleaned test data
+# Predict classification using our cleaned test data.
 resultMNBc = modelMNBc.predict(X_test_c)
 resultSVMc = modelSVMc.predict(X_test_c)
 resultBNBc = modelBNBc.predict(X_test_c)
 resultGNBc = modelGNBc.predict(X_test_c.todense())
 
-# Print out confusion matrix and classification report. <-- More on this later.
+# Print out confusion matrix and classification report.
 print(" ")
 print("Confusion Matrix Legend:")
 print("True Positive " + "," + "False Positive ")
@@ -198,10 +211,10 @@ print (classification_report(resultSVMc, y_test_c))
 
 
 # Compute ROC curve and ROC area for each method used
-# Baseline
+# Baseline.
 r_prob = [0 for _ in range(len(y_test))]
 
-# Get the probability of the predictions
+# Get the probability of the predictions.
 mnnb_prob = modelMNB.predict_proba(X_test)
 bnb_prob = modelBNB.predict_proba(X_test)
 gnnb_prob = modelGNB.predict_proba(X_test.todense())
@@ -225,8 +238,8 @@ svm_auc = roc_auc_score(y_test, svm_prob)
 
 
 #print(r_auc)
-print(mnnb_auc)
-print(gnnb_auc)
+#print(mnnb_auc)
+#print(gnnb_auc)
 
 y_test= '1' <= y_test
 
@@ -257,4 +270,3 @@ plt.xlabel("False Positive Rate (1 - Specificity)")
 plt.ylabel("True Positive Rate (Sensitivity)")
 plt.legend()
 plt.show()
-"""

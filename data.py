@@ -31,6 +31,8 @@ num_total = num_ham + num_spam
 # Consist of value-key pair word: total_used 
 words_spam = {} 
 words_ham = {}
+words = {}
+
 
 
 # Returns the entire dataframe for easy access
@@ -99,6 +101,7 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
     
     words_ham.clear()
     words_spam.clear()
+    words.clear()
     
     # The function that does the counting
     def word_counter(email, words_dict):
@@ -110,7 +113,10 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
 
     # Looping through each item in the emails dataset
     for index, row in df.iterrows():
-        # Check the label first
+
+        word_counter(row['email'], words )
+        
+        # Check the label first 
         if row['label'] == 1: 
             word_counter(row['email'], words_spam )
         elif row['label'] == 0:
