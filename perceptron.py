@@ -1,4 +1,4 @@
-import data, sys
+import data, sys, time
 import numpy as np
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -179,8 +179,12 @@ testing_set = create_dictionary(x_test, y_test)
 weights = {}
 itr, lc = set_params()
 
+# Checking the time it takes to train the model
+t0 = time.time()
 # Running the training algorithm with the provided parameters.
 lowest_threshold, highest_threshold = learn_weights(weights, training_set, itr, lc)
+training_time = time.time() - t0
+
 # The test function returns the four values ov a confusion matrix
 tp, tn, fp, fn = test_weights(weights, testing_set)
 
@@ -191,6 +195,7 @@ tp_rate = tp/(tp+fn)
 fp_rate = fp/(fp+tn)
 
 # Printing the data to terminal
+print("Time spent training the model: %.2f" % training_time + "s.")
 print("Accuracy of the model at threshold 0: %.1f" % acc + "%")
 print("True positive rate: %.2f" % tp_rate)
 print("False positive rate: %.2f\n" % fp_rate)
