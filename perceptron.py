@@ -118,7 +118,7 @@ def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_
     current_threshold = lowest_threshold
     # Iterate num_points times to get confusion matricies with different 
     # thresholds
-    for i in range(num_points):
+    for _ in range(num_points):
         # Step
         current_threshold += step
         # Create new weights
@@ -236,10 +236,10 @@ weights = {}
 itr, lc, points_num, k_folds = set_params()
 
 # Checking the time it takes to train the model
-t0 = time.time()
+tt0 = time.time()
 # Running the training algorithm with the provided parameters.
 lowest_threshold, highest_threshold = learn_weights(weights, training_set, itr, lc)
-training_time = time.time() - t0
+training_time = time.time() - tt0
 
 # The test function returns the four values ov a confusion matrix
 tp, tn, fp, fn = test_weights(weights, testing_set)
@@ -250,8 +250,11 @@ print("Time spent training the model: %.2f" % training_time + "s.\n")
 # Plotting the confusion matrix of a perceptron with the threshold set to 0
 plot_cm([[tp, fp],[fn, tn]])
 
+cvt0 = time.time()
 # Preforming cross validation on the perceptron
 acc, std = cross_validation(k_folds, itr, lc, x_train, y_train)
+cv_time = time.time() - cvt0
+print("Cross validation took %.2f seconds to complete." % cv_time)
 print("The model preformed with an accuracy of %.2f%s with a standard deviation of +- %.2f\n" % (acc, '%', std))
 
 # Plotting the ROC curve.
