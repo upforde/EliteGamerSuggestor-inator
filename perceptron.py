@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 
-#------------------ function definitions ------------------
+#region ------------ function definitions ------------------
 # Function that merges the email and lable tuples into a dictionary
 def create_dictionary(x, y):
     dictionary = {}
@@ -16,7 +16,7 @@ def create_dictionary(x, y):
 
 # Function for perceptron training
 def learn_weights(weights, training_set, num_iterations, learning_constant, threshold = 0, verbose = True):
-    if verbose: print(f"The training iterates {num_iterations} times with a learning constant of {learning_constant}\n")
+    if verbose: print(f"The training iterates {num_iterations} times with a learning constant of {learning_constant}")
     least_sum = float('inf')
     most_sum = float('-inf')
     # Iterating the weight adjustment process
@@ -89,12 +89,14 @@ def test_weights(weights, testing_set):
 
 # Function to set the iteration and learning constant parameters
 def set_params():
-    # Setting the training parameters to be 20 iterations and a learning constant 
-    # of 0.1 by default. These may be changed by providing them when starting the 
-    # python script
+    # Setting the training parameters to be by default 20 iterations, a learning constant 
+    # of 0.1, the number of points to be at 10 and number of folds to be 4.
+    # These may be changed by providing them when starting the python script
     itr = int(sys.argv[2]) if len(sys.argv) >= 3 else 20
     lc = float(sys.argv[3]) if len(sys.argv) >= 4 else 0.1
-    return itr, lc
+    points_num = int(sys.argv[4]) if len(sys.argv) >= 5 else 10
+    k_folds = int(sys.argv[5]) if len(sys.argv) >= 6 else 4
+    return itr, lc, points_num, k_folds
 
 # Function that plots a confusion matrix
 def plot_cm(cm):
@@ -103,10 +105,8 @@ def plot_cm(cm):
     plt.show()
 
 # Function that plots an ROC curve
-def plot_roc(num_points, lowest_threshold, highest_threshold, training_set, testing_set):
+def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_set, testing_set):
     print(f"Creating the ROC graph with {num_points} points. This may take a while...")
-    # Get the iteration and learning constant parameters
-    itr, lc = set_params()
     # Initiate the arrays that will hold the true positive and true 
     # negative rates
     tp_rates = [0.0]
@@ -161,8 +161,64 @@ def order_points(x, y):
         x[i] = points[i][0]
         y[i] = points[i][1]
 
+# Funciton that preforms cross validation on the perceptron
+def cross_validation(k_folds, itr, lc, x_train, y_traing):
+    print(f"Preforming {k_folds}-fold cross validation.")
+    # Setting up the array that will hold the accuracy scores for each fold
+    fold_accuracy = []
+    # Splitting the training data into folds
+    data = create_folds(k_folds, x_train, y_train)
+    # For each fold
+    for i in range(k_folds):
+        # Setting up new weights for the perceptron, sinece it 
+        # has to be refitted with the new data each time
+        weights = {}
+        # Setting up the dictionaries that will contain the trainig data (which
+        # is the rest of the data that is not the fold used for validation)
+        # and the validation data (which is the fold used for validation)
+        training_set = {}
+        validation_set = {}
+        for j in range(k_folds):
+            if j != i: training_set.update(data[j])
+            else: validation_set.update(data[j])
+        # Running the training function on the training set
+        learn_weights(weights, training_set, itr, lc, 0, False)
+        # Testing the weights with the validation fold
+        tp, tn, fp, fn = test_weights(weights, validation_set)
+        # Appending the accuracy score for this fold
+        fold_accuracy.append((tp+tn)/(tp+tn+fp+fn))
+    # The function returns the mean accuracy score, as well 
+    # as the standard deviation from the mean
+    return np.mean(fold_accuracy), np.std(fold_accuracy)
+            
+# Function that splits the training data into folds
+def create_folds(k_folds, x_train, y_train):
+    # Setting up the data variables that will shrink over time as the 
+    # folds are extracted from the data to not repeat
+    x_data, y_data = x_train, y_train
+    # Setting up the array that will contain the folds
+    folds = []
+    # Looping the wanted amount of times
+    for i in range(k_folds):
+        # Calculating the percentage of data that will become the next fold
+        percentage = 1/(k_folds-i)
+        # If the percentage becomes 100, then the scikit train_test_split won't work as intended, 
+        # so to avoid possible errors, if the percentage becomes 100% (meaning we're on the last 
+        # fold) then the remaining data just gets added to the fold array. If we're not at 100%
+        if percentage != 1:
+            # The scikit learn train_test_slpit function is used to split up the data evenly, so that the 
+            # folds all have some amount of spam as well as ham
+            x_data, fold_x, y_data, fold_y = train_test_split(x_data, y_data, test_size = percentage, random_state=50)
+            # after the split, the "test" data is the new fold, which is turned into a dictionary
+            # and added into the folds array, while data is set to the data that wasn't used in this fold
+            folds.append(create_dictionary(fold_x, fold_y))
+        else: folds.append(create_dictionary(x_data, y_data))
+    # The function returns the folds
+    return folds
 
-#-------------------- running the code --------------------
+#endregion
+
+#region -------------- running the code --------------------
 # Getting the dataset from data.py
 data.count_words()
 df = data.get_data()
@@ -177,7 +233,7 @@ testing_set = create_dictionary(x_test, y_test)
 # The weight dictionary, as well as the iteration nummber and the learning 
 # constant are instanciated, before being sent into the learn_weights function
 weights = {}
-itr, lc = set_params()
+itr, lc, points_num, k_folds = set_params()
 
 # Checking the time it takes to train the model
 t0 = time.time()
@@ -188,22 +244,17 @@ training_time = time.time() - t0
 # The test function returns the four values ov a confusion matrix
 tp, tn, fp, fn = test_weights(weights, testing_set)
 
-# Calculating the accuracy, true positive- and false positive rate of 
-# the method at threshold 0
-acc = (tp+tn)/(tp+tn+fp+fn)*100
-tp_rate = tp/(tp+fn)
-fp_rate = fp/(fp+tn)
-
 # Printing the data to terminal
-print("Time spent training the model: %.2f" % training_time + "s.")
-print("Accuracy of the model at threshold 0: %.1f" % acc + "%")
-print("True positive rate: %.2f" % tp_rate)
-print("False positive rate: %.2f\n" % fp_rate)
+print("Time spent training the model: %.2f" % training_time + "s.\n")
 
 # Plotting the confusion matrix of a perceptron with the threshold set to 0
 plot_cm([[tp, fp],[fn, tn]])
 
-# Instanciating the number of points the ROC curve will have
-points_num = int(sys.argv[1]) if len(sys.argv) >= 2 else 10
+# Preforming cross validation on the perceptron
+acc, std = cross_validation(k_folds, itr, lc, x_train, y_train)
+print("The model preformed with an accuracy of %.2f%s with a standard deviation of +- %.2f\n" % (acc, '%', std))
+
 # Plotting the ROC curve.
-plot_roc(points_num, lowest_threshold, highest_threshold, training_set, testing_set)
+plot_roc(itr, lc, points_num, lowest_threshold, highest_threshold, training_set, testing_set)
+
+#endregion
