@@ -3,6 +3,7 @@ import pandas as pd
 import nltk.stem 
 from nltk.corpus import stopwords
 
+
 # If any of the nltk libraries are not already downloaded, uncomment this
 #nltk.download('wordnet')
 #nltk.download('stopwords')
@@ -10,11 +11,6 @@ from nltk.corpus import stopwords
 # Read the csv file with all the emails
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
-
-# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
-exclusions = pd.read_csv('data/exclusions.csv')
-# Convert into a list for faster processing down the line
-exclusions = exclusions['exclusions'].to_list()
 
 # The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
 stop_words = set(stopwords.words('english'))
@@ -54,7 +50,7 @@ def num_words(index):
     # 4. Lemmatizes the words.
     # 5. Stemming 
     
-def clean_data(max_length = 3, lemmatize = True, stem = True):
+def clean_data(max_length = 1, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
@@ -68,7 +64,7 @@ def clean_data(max_length = 3, lemmatize = True, stem = True):
         # Split the email and loop through each word
         for word in email_lc.split():
             # If the word passes the length check and is not in the exclustions list it is added back into the email
-            if len(word) > max_length and (word not in stop_words) and (word not in exclusions):
+            if len(word) > max_length and (word not in stop_words):
                 temp = temp + word + " "
 
         # Lemmatize
@@ -103,6 +99,7 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
     
     # The function that does the counting
     def word_counter(email, words_dict):
+         
         for word in str(email).split():
             if word in words_dict:
                 words_dict[word] = words_dict[word] + 1
@@ -126,4 +123,9 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True):
 def order_words():
     return sorted(words_ham.items(), key=lambda x: x[1], reverse = True) , sorted(words_spam.items(), key=lambda x: x[1], reverse = True)
     
-    
+count_words(True, True, False)
+
+ham, spam = order_words()
+
+print(ham[0:20])
+print(spam[0:20])
