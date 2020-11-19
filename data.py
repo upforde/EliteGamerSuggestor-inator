@@ -17,6 +17,11 @@ import re
 # All email are read into a pandas dataframe
 df = pd.read_csv('data/emails.csv')
 
+# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
+exclusions = pd.read_csv('data/exclusions.csv')
+# Convert into a list for faster processing down the line
+exclusions = exclusions['exclusions'].to_list()
+
 # Enron database 
 
 # Returns the Enron db
@@ -100,8 +105,9 @@ big_df_spam = {}
 big_df_ham = {}
 
 # Returns the entire dataframe for easy access
-def get_data():
-    return df
+def get_data(bdf_bool):
+    if bdf_bool: return big_df
+    else: return df
 
 # Returns a tuple with the email and its label at the index
 def get_row(index):
@@ -120,12 +126,12 @@ def num_words(index):
     # 4. Lemmatizes the words;
     # 5. Stemming 
     
-def clean_data(max_length = 1, lemmatize = True, stem = True, df = True):
+def clean_data(max_length = 1, lemmatize = True, stem = True, df_bool = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
 
-    if df:
+    if df_bool:
         database = df
     else:
         database = big_df
@@ -139,7 +145,7 @@ def clean_data(max_length = 1, lemmatize = True, stem = True, df = True):
         # Split the email and loop through each word
         for word in email_lc.split():
             # If the word passes the length check and is not in the exclustions list it is added back into the email
-            if len(word) > max_length and (word not in stop_words):
+            if len(word) > max_length and (word not in stop_words) and (word not in exclusions):
                 temp = temp + word + " "
 
         # Lemmatize
@@ -163,10 +169,10 @@ def clean_data(max_length = 1, lemmatize = True, stem = True, df = True):
         temp = ""
 
 # Clears and then populates the dictionaries 
-def count_words(data_cleaning = True, lemmatize = True, stem = True, df = True):
+def count_words(df_bool = True, data_cleaning = True, lemmatize = True, stem = True):
     
     if data_cleaning:
-        clean_data(data_cleaning, lemmatize, stem, df)
+        clean_data(data_cleaning, lemmatize, stem, df_bool)
 
     # The function that does the counting
     def word_counter(email, words_dict):
@@ -188,7 +194,7 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True, df = True):
             else:
                 print("Wrong label used - " + str(row['label']) + " at index " + str(index) + ".  Ignoring it." )
                     
-    if df:
+    if df_bool:
         df_ham.clear()
         df_spam.clear()
         iterate(df_spam, df_ham, df)
@@ -201,14 +207,8 @@ def count_words(data_cleaning = True, lemmatize = True, stem = True, df = True):
 # Orders the words and return an ordered list 
 # The elements are lists with the word at index 0 and num of occurences at index 1
 # The list is ordered, so the first value is the most occured word
-def order_words(df = True):
-    if df:
-        database = df
-    else:
-        database = big_df
-    
-    if (database == df):
+def order_words(df_bool = True):
+    if df_bool:
         return sorted(df_ham.items(), key=lambda x: x[1], reverse = True) , sorted(df_spam.items(), key=lambda x: x[1], reverse = True)
     else:
         return sorted(big_df_ham.items(), key=lambda x: x[1], reverse = True) , sorted(big_df_spam.items(), key=lambda x: x[1], reverse = True)
- 

@@ -19,6 +19,8 @@ def learn_weights(weights, training_set, num_iterations, learning_constant, thre
     if verbose: print(f"The training iterates {num_iterations} times with a learning constant of {learning_constant}")
     least_sum = float('inf')
     most_sum = float('-inf')
+    # Measuring the time it takes to train the model
+    t0 = time.time()
     # Iterating the weight adjustment process
     for i in range(num_iterations):
         # For each instance in the training set
@@ -50,6 +52,9 @@ def learn_weights(weights, training_set, num_iterations, learning_constant, thre
                 f_spam = words_spam[word] if word in words_spam.keys() else 0.0
                 f_ham = words_ham[word] if word in words_ham.keys() else 0.0
                 weights[word] += float(learning_constant) * float(training_set[instance]-perceptron_output) * float((f_spam-f_ham))
+    # Outputing the time it took to train the model
+    if verbose: print("Time spent training the model: %.2f" % (time.time()-t0) + "s.")
+    # Function returns the extreme thresholds of the model
     return least_sum, most_sum
              
 # Function to apply the weights to an instance
@@ -89,14 +94,16 @@ def test_weights(weights, testing_set):
 
 # Function to set the iteration and learning constant parameters
 def set_params():
-    # Setting the training parameters to be by default 20 iterations, a learning constant 
-    # of 0.1, the number of points to be at 10 and number of folds to be 4.
-    # These may be changed by providing them when starting the python script
+    # Setting parameters to be by default the small dataset of emails,
+    # 20 iterations of training, a learning constant of 0.1, the number of points 
+    # to be at 10 and number of folds to be 4. These may be changed by
+    #  providing them when starting the python script
+    big = sys.argv[1].lower() == "big" if len(sys.argv) >= 2 else False
     itr = int(sys.argv[2]) if len(sys.argv) >= 3 else 20
     lc = float(sys.argv[3]) if len(sys.argv) >= 4 else 0.1
     points_num = int(sys.argv[4]) if len(sys.argv) >= 5 else 10
     k_folds = int(sys.argv[5]) if len(sys.argv) >= 6 else 4
-    return itr, lc, points_num, k_folds
+    return big, itr, lc, points_num, k_folds
 
 # Function that plots a confusion matrix
 def plot_cm(cm):
@@ -116,6 +123,8 @@ def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_
     step = (abs(lowest_threshold) + abs(highest_threshold)) / (num_points+1)
     # Initiate the thresholde to be the lowest threshold
     current_threshold = lowest_threshold
+    # Measuring the time it takes to generate an ROC curve
+    t0 = time.time()
     # Iterate num_points times to get confusion matricies with different 
     # thresholds
     for _ in range(num_points):
@@ -137,6 +146,8 @@ def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_
     # the curve intersects itself as the thresholds at both low and high extremes
     # produce similar results
     order_points(fp_rates, tp_rates)
+    #outputing time it took to generate the ROC curve data
+    print("Time spent on generating the ROC curve: %.2f" % (time.time()-t0) + "s.")
     # Plot the curve using matplotlib and show it.
     plt.title('ROC curve')
     plt.plot([0, 1], [0, 1], 'r--', zorder=1)
@@ -163,7 +174,9 @@ def order_points(x, y):
 
 # Funciton that preforms cross validation on the perceptron
 def cross_validation(k_folds, itr, lc, x_train, y_traing):
-    print(f"Preforming {k_folds}-fold cross validation.")
+    print(f"Performing {k_folds}-fold cross validation.")
+    # Measuring the time cross validation takes
+    t0 = time.time()
     # Setting up the array that will hold the accuracy scores for each fold
     fold_accuracy = []
     # Splitting the training data into folds
@@ -187,6 +200,8 @@ def cross_validation(k_folds, itr, lc, x_train, y_traing):
         tp, tn, fp, fn = test_weights(weights, validation_set)
         # Appending the accuracy score for this fold
         fold_accuracy.append((tp+tn)/(tp+tn+fp+fn))
+    # Outputing the time it took to perform cross validation
+    print("Cross validation took %.2f seconds to complete." % (time.time()-t0))
     # The function returns the mean accuracy score, as well 
     # as the standard deviation from the mean
     return np.mean(fold_accuracy), np.std(fold_accuracy)
@@ -219,43 +234,36 @@ def create_folds(k_folds, x_train, y_train):
 #endregion
 
 #region -------------- running the code --------------------
+# Setting the initial parameters
+big, itr, lc, points_num, k_folds = set_params()
 # Getting the dataset from data.py
-data.count_words()
-df = data.get_data()
-words_ham, words_spam = data.order_words()
-x_train, x_test, y_train, y_test = train_test_split(df['email'], df['label'], test_size = 0.333, random_state = 50)
+data.count_words(big)
+df = data.get_data(big)
+words_ham, words_spam = data.order_words(big)
+x_train, x_test, y_train, y_test = train_test_split(df['email'], df['label'], test_size = 1/3, random_state = 50)
 # Converting the data from data.py into dictionaries. This choice was done mainly
 # because the perceptron seemed easier to implement with the use of dictionaries.
 words_ham, words_spam = dict(words_ham), dict(words_spam)
 training_set = create_dictionary(x_train, y_train)
 testing_set = create_dictionary(x_test, y_test)
 
-# The weight dictionary, as well as the iteration nummber and the learning 
-# constant are instanciated, before being sent into the learn_weights function
+# The weight dictionary is instanciated, 
+# before being sent into the learn_weights function
 weights = {}
-itr, lc, points_num, k_folds = set_params()
 
-# Checking the time it takes to train the model
-tt0 = time.time()
 # Running the training algorithm with the provided parameters.
 lowest_threshold, highest_threshold = learn_weights(weights, training_set, itr, lc)
-training_time = time.time() - tt0
 
 # The test function returns the four values ov a confusion matrix
 tp, tn, fp, fn = test_weights(weights, testing_set)
-
-# Printing the data to terminal
-print("Time spent training the model: %.2f" % training_time + "s.\n")
+print("The model performed with an accuracy of %.2f%s\n" % ((tp+tn)/(tp+tn+fp+fn), '%'))
 
 # Plotting the confusion matrix of a perceptron with the threshold set to 0
 plot_cm([[tp, fp],[fn, tn]])
 
-cvt0 = time.time()
 # Preforming cross validation on the perceptron
 acc, std = cross_validation(k_folds, itr, lc, x_train, y_train)
-cv_time = time.time() - cvt0
-print("Cross validation took %.2f seconds to complete." % cv_time)
-print("The model preformed with an accuracy of %.2f%s with a standard deviation of +- %.2f\n" % (acc, '%', std))
+print("In cross validation the model performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc, '%', std))
 
 # Plotting the ROC curve.
 plot_roc(itr, lc, points_num, lowest_threshold, highest_threshold, training_set, testing_set)
