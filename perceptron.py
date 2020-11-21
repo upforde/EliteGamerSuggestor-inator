@@ -238,7 +238,6 @@ def create_folds(k_folds, x_train, y_train):
 small, itr, lc, points_num, k_folds = set_params()
 # Getting the dataset from data.py
 df = data.count_words(small)
-print(df)
 words_ham, words_spam = data.order_words(small)
 x_train, x_test, y_train, y_test = train_test_split(df['email'], df['label'], test_size = 1/3, random_state = 50)
 # Converting the data from data.py into dictionaries. This choice was done mainly
