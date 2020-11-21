@@ -13,21 +13,11 @@ import re
 #nltk.download('wordnet')
 #nltk.download('stopwords')
 
-# Read the csv file with all the Spamassassin emails
-# All email are read into a pandas dataframe
-df = pd.read_csv('data/emails.csv')
-
-# Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
-exclusions = pd.read_csv('data/exclusions.csv')
-# Convert into a list for faster processing down the line
-exclusions = exclusions['exclusions'].to_list()
-
 # Enron database 
 
 # Returns the Enron db
 # lower cased, punctuation and newlines removed, urls and numbers replaces to words "url" and "number"
 def get_big_df():
-    
     def is_number(n):
         try:
             float(n)   
@@ -68,15 +58,11 @@ def get_big_df():
     # Adding all spam emails
     for entry in os.scandir(r'data/Enron/spam'):
         big_df = big_df.append( pd.DataFrame( [[pre_clean(open(entry, errors=('replace')).read()), 1]] , columns = ['email', 'label']), ignore_index=True )
-        
     
     return big_df
 
-big_df = get_big_df()
-
 # The stop words from nltk library has the most common words used in a language that bear no meaning (articles, prepositions, etc.)
 stop_words = set(stopwords.words('english'))
-
 
 # Number of spam and ham emails in the dataset for easy retrieval
 def num_spam(is_df = True):
@@ -104,19 +90,13 @@ df_ham = {}
 big_df_spam = {}
 big_df_ham = {}
 
-# Returns the entire dataframe for easy access
-def get_data(bdf_bool):
-    if bdf_bool: return big_df
-    else: return df
-
 # Returns a tuple with the email and its label at the index
-def get_row(index):
+def get_row(df, index):
     return df.at[index, 'email'], df.at[index, 'label']
 
-
 # Returns num of words in an email at given index
-def num_words(index):
-    email = get_row(index)[0]
+def num_words(df, index):
+    email = get_row(df, index)[0]
     return len(email.split())
 
 # Data cleaning is a preprocessing step that:
@@ -126,18 +106,18 @@ def num_words(index):
     # 4. Lemmatizes the words;
     # 5. Stemming 
     
-def clean_data(max_length = 1, lemmatize = True, stem = True, df_bool = True):
+def clean_data(df, max_length = 1, lemmatize = True, stem = True):
     temp = ""
     lemmatizer = nltk.stem.WordNetLemmatizer()
     stemmer = nltk.stem.PorterStemmer()
 
-    if df_bool:
-        database = df
-    else:
-        database = big_df
+    # Exclusions are a list of words that are removed from the original data - these consist of stop words, articles, prepositions, etc.
+    exclusions = pd.read_csv('data/exclusions.csv')
+    # Convert into a list for faster processing down the line
+    exclusions = exclusions['exclusions'].to_list()
 
     # Loop through emails
-    for index, row in database.iterrows():
+    for index, row in df.iterrows():
 
         # Lower case the entire email
         email_lc = str(row['email']).lower()
@@ -165,14 +145,15 @@ def clean_data(max_length = 1, lemmatize = True, stem = True, df_bool = True):
             temp = stem_temp
         
         # Rewrite the original email 
-        database.at[index, 'email'] = temp
+        df.at[index, 'email'] = temp
         temp = ""
 
 # Clears and then populates the dictionaries 
 def count_words(df_bool = True, data_cleaning = True, lemmatize = True, stem = True):
-    
-    if data_cleaning:
-        clean_data(data_cleaning, lemmatize, stem, df_bool)
+    if df_bool: df = pd.read_csv('data/emails.csv')
+    else: df = get_big_df()
+
+    if data_cleaning: clean_data(df, 1, lemmatize, stem)
 
     # The function that does the counting
     def word_counter(email, words_dict):
@@ -201,9 +182,9 @@ def count_words(df_bool = True, data_cleaning = True, lemmatize = True, stem = T
     else:
         big_df_ham.clear()
         big_df_spam.clear()
-        iterate(big_df_spam, big_df_ham, big_df)
-
-            
+        iterate(big_df_spam, big_df_ham, df)
+    return df
+        
 # Orders the words and return an ordered list 
 # The elements are lists with the word at index 0 and num of occurences at index 1
 # The list is ordered, so the first value is the most occured word

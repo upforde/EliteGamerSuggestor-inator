@@ -98,7 +98,7 @@ def set_params():
     # 20 iterations of training, a learning constant of 0.1, the number of points 
     # to be at 10 and number of folds to be 4. These may be changed by
     #  providing them when starting the python script
-    big = sys.argv[1].lower() == "big" if len(sys.argv) >= 2 else False
+    big = sys.argv[1].lower() == "small" if len(sys.argv) >= 2 else True
     itr = int(sys.argv[2]) if len(sys.argv) >= 3 else 20
     lc = float(sys.argv[3]) if len(sys.argv) >= 4 else 0.1
     points_num = int(sys.argv[4]) if len(sys.argv) >= 5 else 10
@@ -235,11 +235,11 @@ def create_folds(k_folds, x_train, y_train):
 
 #region -------------- running the code --------------------
 # Setting the initial parameters
-big, itr, lc, points_num, k_folds = set_params()
+small, itr, lc, points_num, k_folds = set_params()
 # Getting the dataset from data.py
-data.count_words(big)
-df = data.get_data(big)
-words_ham, words_spam = data.order_words(big)
+df = data.count_words(small)
+print(df)
+words_ham, words_spam = data.order_words(small)
 x_train, x_test, y_train, y_test = train_test_split(df['email'], df['label'], test_size = 1/3, random_state = 50)
 # Converting the data from data.py into dictionaries. This choice was done mainly
 # because the perceptron seemed easier to implement with the use of dictionaries.
