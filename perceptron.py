@@ -1,9 +1,11 @@
+#region import statements
 import data, sys, time
 import numpy as np
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
+#endregion
 
 #region ------------ function definitions ------------------
 # Function that merges the email and lable tuples into a dictionary
@@ -15,7 +17,7 @@ def create_dictionary(x, y):
     return dictionary
 
 # Function for perceptron training
-def learn_weights(weights, training_set, num_iterations, learning_constant, threshold = 0, verbose = True):
+def learn_weights(weights, training_set, words_spam, words_ham, num_iterations, learning_constant, threshold = 0, verbose = True):
     if verbose: print(f"The training iterates {num_iterations} times with a learning constant of {learning_constant}")
     least_sum = float('inf')
     most_sum = float('-inf')
@@ -27,7 +29,7 @@ def learn_weights(weights, training_set, num_iterations, learning_constant, thre
         for instance in training_set.keys():
             weight_sum = 0.0
             # Loop through each word in the instance
-            for word in instance.split():
+            for word in str(instance).split():
                 # Add the word to the weights dictionary if it's not present
                 if word not in weights.keys(): weights.update({word: 0.0})
                 # Find the ham and spam frequency for this word in the datasett
@@ -48,7 +50,7 @@ def learn_weights(weights, training_set, num_iterations, learning_constant, thre
             perceptron_output = 1 if weight_sum > threshold else 0
             # Update the weights of the relavant words to the instance at hand
             # based on the perceptron training rule
-            for word in instance.split():
+            for word in str(instance).split():
                 f_spam = words_spam[word] if word in words_spam.keys() else 0.0
                 f_ham = words_ham[word] if word in words_ham.keys() else 0.0
                 weights[word] += float(learning_constant) * float(training_set[instance]-perceptron_output) * float((f_spam-f_ham))
@@ -58,12 +60,12 @@ def learn_weights(weights, training_set, num_iterations, learning_constant, thre
     return least_sum, most_sum
              
 # Function to apply the weights to an instance
-def apply(weights, instance, threshold = 0):
+def apply(weights, instance, words_spam, words_ham, threshold = 0):
     weight_sum = 0.0
     # Works similarly to the learning function, where the sum of the
     # weights gets summed up, and if the value is positive, then the
     # perceptron is excited (1)
-    for word in instance.split():
+    for word in str(instance).split():
         if word not in weights.keys(): weights.update({word: 0.0})
         f_spam = words_spam[word] if word in words_spam.keys() else 0.0
         f_ham = words_ham[word] if word in words_ham.keys() else 0.0
@@ -72,12 +74,12 @@ def apply(weights, instance, threshold = 0):
     return 0
 
 # Function to test the weights on a testing set
-def test_weights(weights, testing_set):
+def test_weights(weights, testing_set, words_spam, words_ham, threshold = 0):
     tp, tn, fp, fn = 0, 0, 0, 0
     # Each instance in the testing set has the learned weights
     # applied to it.
     for instance in testing_set.keys():
-        guess = apply(weights, instance)
+        guess = apply(weights, instance, words_spam, words_ham, threshold)
         # The perceptron result is then checked with the labeling
         if guess == testing_set[instance]:
             # If the perceptron result is correct, then either the
@@ -112,7 +114,7 @@ def plot_cm(cm):
     plt.show()
 
 # Function that plots an ROC curve
-def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_set, testing_set):
+def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_set, testing_set, words_spam, words_ham):
     print(f"Creating the ROC graph with {num_points} points. This may take a while...")
     # Initiate the arrays that will hold the true positive and true 
     # negative rates
@@ -133,9 +135,9 @@ def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_
         # Create new weights
         weights = {}
         # Run the training function with the new threshold
-        learn_weights(weights, training_set, itr, lc, current_threshold, False)
+        learn_weights(weights, training_set, words_spam, words_ham, itr, lc, current_threshold, False)
         # Test the new weights and get the confusion matrix for that threshold
-        tp, tn, fp, fn = test_weights(weights, testing_set)
+        tp, tn, fp, fn = test_weights(weights, testing_set, words_spam, words_ham, current_threshold)
         # Append the true positive and false positive rates to the arrays
         tp_rates.append(tp/(tp+fn))
         fp_rates.append(fp/(fp+tn))
@@ -173,7 +175,7 @@ def order_points(x, y):
         y[i] = points[i][1]
 
 # Funciton that preforms cross validation on the perceptron
-def cross_validation(k_folds, itr, lc, x_train, y_traing):
+def cross_validation(k_folds, itr, lc, x_train, y_train, words_spam, words_ham):
     print(f"Performing {k_folds}-fold cross validation.")
     # Measuring the time cross validation takes
     t0 = time.time()
@@ -195,9 +197,9 @@ def cross_validation(k_folds, itr, lc, x_train, y_traing):
             if j != i: training_set.update(data[j])
             else: validation_set.update(data[j])
         # Running the training function on the training set
-        learn_weights(weights, training_set, itr, lc, 0, False)
+        learn_weights(weights, training_set, words_spam, words_ham, itr, lc, 0, False)
         # Testing the weights with the validation fold
-        tp, tn, fp, fn = test_weights(weights, validation_set)
+        tp, tn, fp, fn = test_weights(weights, validation_set, words_spam, words_ham)
         # Appending the accuracy score for this fold
         fold_accuracy.append((tp+tn)/(tp+tn+fp+fn))
     # Outputing the time it took to perform cross validation
@@ -230,41 +232,101 @@ def create_folds(k_folds, x_train, y_train):
         else: folds.append(create_dictionary(x_data, y_data))
     # The function returns the folds
     return folds
-
 #endregion
 
 #region -------------- running the code --------------------
 # Setting the initial parameters
 small, itr, lc, points_num, k_folds = set_params()
-# Getting the dataset from data.py
-df = data.count_words(small)
-words_ham, words_spam = data.order_words(small)
-x_train, x_test, y_train, y_test = train_test_split(df['email'], df['label'], test_size = 1/3, random_state = 50)
+#region Getting the uncleaned dataset from data.py
+df_u = data.count_words(small, False)
+words_ham_u, words_spam_u = data.order_words(small)
+x_train_u, x_test_u, y_train_u, y_test_u = train_test_split(df_u['email'], df_u['label'], test_size = 1/3, random_state = 50)
 # Converting the data from data.py into dictionaries. This choice was done mainly
 # because the perceptron seemed easier to implement with the use of dictionaries.
-words_ham, words_spam = dict(words_ham), dict(words_spam)
-training_set = create_dictionary(x_train, y_train)
-testing_set = create_dictionary(x_test, y_test)
+words_ham_u, words_spam_u = dict(words_ham_u), dict(words_spam_u)
+training_set_u = create_dictionary(x_train_u, y_train_u)
+testing_set_u = create_dictionary(x_test_u, y_test_u)
+#endregion
+#region Getting the cleaned data from data.py with only lemmatization active
+df_cl = data.count_words(small, True, True, False)
+words_ham_cl, words_spam_cl = data.order_words(small)
+x_train_cl, x_test_cl, y_train_cl, y_test_cl = train_test_split(df_cl['email'], df_cl['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_cl, words_spam_cl = dict(words_ham_cl), dict(words_spam_cl)
+training_set_cl = create_dictionary(x_train_cl, y_train_cl)
+testing_set_cl = create_dictionary(x_test_cl, y_test_cl)
+#endregion
+#region Getting the cleaned data from data.py with only stemmer active
+df_cs = data.count_words(small, True, False, True)
+words_ham_cs, words_spam_cs = data.order_words(small)
+x_train_cs, x_test_cs, y_train_cs, y_test_cs = train_test_split(df_cs['email'], df_cs['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_cs, words_spam_cs = dict(words_ham_cs), dict(words_spam_cs)
+training_set_cs = create_dictionary(x_train_cs, y_train_cs)
+testing_set_cs = create_dictionary(x_test_cs, y_test_cs)
+#endregion
+#region Getting the cleaned data from data.py with both lemmatization and stemmer active
+df_cls = data.count_words(small, True, True, True)
+words_ham_cls, words_spam_cls = data.order_words(small)
+x_train_cls, x_test_cls, y_train_cls, y_test_cls = train_test_split(df_cls['email'], df_cls['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_cls, words_spam_cls = dict(words_ham_cls), dict(words_spam_cls)
+training_set_cls = create_dictionary(x_train_cls, y_train_cls)
+testing_set_cls = create_dictionary(x_test_cls, y_test_cls)
+#endregion
 
-# The weight dictionary is instanciated, 
-# before being sent into the learn_weights function
-weights = {}
+#region The weight dictionaries are instanciated, before being sent into the learn_weights function
+weights_u = {}
+weights_cl = {}
+weights_cs = {}
+weights_cls = {}
+#endregion
+#region Running the training algorithm with the provided parameters.
+lowest_threshold_u, highest_threshold_u = learn_weights(weights_u, training_set_u, words_spam_u, words_ham_u, itr, lc, 0, True)
+lowest_threshold_cl, highest_threshold_cl = learn_weights(weights_cl, training_set_cl, words_spam_cl, words_ham_cl, itr, lc, 0, True)
+lowest_threshold_cs, highest_threshold_cs = learn_weights(weights_cs, training_set_cs, words_spam_cs, words_ham_cs, itr, lc, 0, True)
+lowest_threshold_cls, highest_threshold_cls = learn_weights(weights_cls, training_set_cls, words_spam_cls, words_ham_cls, itr, lc, 0, True)
+#endregion
+#region Testing the weights and plotting the confusion matrixes
+tp_u, tn_u, fp_u, fn_u = test_weights(weights_u, testing_set_u, words_spam_u, words_ham_u)
+print("The model trained on an uncleaned dataset performed with an accuracy of %.2f%s\n" % ((tp_u+tn_u)/(tp_u+tn_u+fp_u+fn_u), '%'))
+plot_cm([[tp_u, fp_u],[fn_u, tn_u]])
 
-# Running the training algorithm with the provided parameters.
-lowest_threshold, highest_threshold = learn_weights(weights, training_set, itr, lc)
+tp_cl, tn_cl, fp_cl, fn_cl = test_weights(weights_cl, testing_set_cl, words_spam_cl, words_ham_cl)
+print("The model trained on a cleaned dataset with lemmatization active performed with an accuracy of %.2f%s\n" % ((tp_cl+tn_cl)/(tp_cl+tn_cl+fp_cl+fn_cl), '%'))
+plot_cm([[tp_cl, fp_cl],[fn_cl, tn_cl]])
 
-# The test function returns the four values ov a confusion matrix
-tp, tn, fp, fn = test_weights(weights, testing_set)
-print("The model performed with an accuracy of %.2f%s\n" % ((tp+tn)/(tp+tn+fp+fn), '%'))
+tp_cs, tn_cs, fp_cs, fn_cs = test_weights(weights_cs, testing_set_cs, words_spam_cs, words_ham_cs)
+print("The model trained on a cleaned dataset with stammer active performed with an accuracy of %.2f%s\n" % ((tp_cs+tn_cs)/(tp_cs+tn_cs+fp_cs+fn_cs), '%'))
+plot_cm([[tp_cs, fp_cs],[fn_cs, tn_cs]])
 
-# Plotting the confusion matrix of a perceptron with the threshold set to 0
-plot_cm([[tp, fp],[fn, tn]])
+tp_cls, tn_cls, fp_cls, fn_cls = test_weights(weights_cls, testing_set_cls, words_spam_cls, words_ham_cls)
+print("The model trained on a cleaned dataset with both lemmatization and stammer active performed with an accuracy of %.2f%s\n" % ((tp_cls+tn_cls)/(tp_cls+tn_cls+fp_cls+fn_cls), '%'))
+plot_cm([[tp_cls, fp_cls],[fn_cls, tn_cls]])
 
-# Preforming cross validation on the perceptron
-acc, std = cross_validation(k_folds, itr, lc, x_train, y_train)
-print("In cross validation the model performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc, '%', std))
-
-# Plotting the ROC curve.
-plot_roc(itr, lc, points_num, lowest_threshold, highest_threshold, training_set, testing_set)
-
+#region Testing an uncleaned testing set on weights that were derived from a cleaned training set
+tp_c_u, tn_c_u, fp_c_u, fn_c_u = test_weights(weights_cls, testing_set_u, words_spam_cls, words_ham_cls)
+print("On an uncleaned testing set, the model trained on a cleaned dataset with both lemmatization and stammer active preformed with an accuracy of %.2f%s\n" % ((tp_c_u+tn_c_u)/(tp_c_u+tn_c_u+fp_c_u+fn_c_u), '%'))
+plot_cm([[tp_c_u, fp_c_u],[fn_c_u, tn_c_u]])
+#endregion
+#endregion
+#region Preforming cross validation on the perceptron
+acc_u, std_u = cross_validation(k_folds, itr, lc, x_train_u, y_train_u, words_spam_u, words_ham_u)
+print("In cross validation the model trained on an uncleaned dataset performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_u, '%', std_u))
+acc_cl, std_cl = cross_validation(k_folds, itr, lc, x_train_cl, y_train_cl, words_spam_cl, words_ham_cl)
+print("In cross validation the model trained on a cleaned dataset with lemmatization active performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cl, '%', std_cl))
+acc_cs, std_cs = cross_validation(k_folds, itr, lc, x_train_cs, y_train_cs, words_spam_cs, words_ham_cs)
+print("In cross validation the model trained on a cleaned dataset with stammer active performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cs, '%', std_cs))
+acc_cls, std_cls = cross_validation(k_folds, itr, lc, x_train_cls, y_train_cls, words_spam_cls, words_ham_cls)
+print("In cross validation the model trained on a cleaned dataset with both lemmatization and stammer performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cls, '%', std_cls))
+#endregion
+#region Plotting the ROC curves.
+plot_roc(itr, lc, points_num, lowest_threshold_u, highest_threshold_u, training_set_u, testing_set_u, words_spam_u, words_ham_u)
+plot_roc(itr, lc, points_num, lowest_threshold_cl, highest_threshold_cl, training_set_cl, testing_set_cl, words_spam_cl, words_ham_cl)
+plot_roc(itr, lc, points_num, lowest_threshold_cs, highest_threshold_cs, training_set_cs, testing_set_cs, words_spam_cs, words_ham_cs)
+plot_roc(itr, lc, points_num, lowest_threshold_cls, highest_threshold_cls, training_set_cls, testing_set_cls, words_spam_cls, words_ham_cls)
+#endregion
 #endregion
