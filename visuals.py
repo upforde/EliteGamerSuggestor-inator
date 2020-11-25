@@ -1,3 +1,4 @@
+import data
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,11 +12,6 @@ def get_ROC(model, X_test, y_test, i = None, clean = None):
     # Keep positive outcome of the methods if function abides it.
     if isinstance(model, LinearSVC):
         prob = model.decision_function(X_test)
-    elif isinstance(model, GaussianNB):
-        # Apparently the probabilities are very close to zero or one. Forced to use log on this one.
-        prob = model.predict_log_proba(X_test.toarray())
-        prob = prob[:, 1]
-        print(prob)
     else:
         prob = model.predict_proba(X_test)
         prob = prob[:, 1]
@@ -45,9 +41,8 @@ def draw_ROC(roc_list):
     plt.ylabel("True Positive Rate (Sensitivity)")
     plt.legend()
     if filename is not None:
-        plt.savefig(f"images/ROC{filename}.png")
-    else:
-        plt.show()
+        plt.savefig(f"images/ROC/{filename}.png")
+    plt.show()
     plt.clf()
     roc_list = []
     return roc_list
@@ -63,19 +58,32 @@ def plot_cm(cm, model, clean, i = None):
     filename = get_label(model, i) + get_clean_name(clean)
     df_cm = pd.DataFrame(cm, index = ["Real Ham", "Real Spam"], columns = ["Guessed Ham", "Guessed Spam"])
     sn.heatmap(df_cm, annot=True, fmt="d", cmap=sn.color_palette("rocket_r", as_cmap=True))
-    plt.savefig(f"images/Matrix{filename}.png")
+    plt.savefig(f"images/Matrix/{filename}.png")
+    plt.show()
     plt.clf()
 
 def get_clean_name(clean):
     cleandata = ""
-    filename = ""
+    status = ""
+    dataframe = "Big dataframe "
     if clean[0]:
-        if clean[1] and clean[2]:
-            cleandata = "Lemm And Stem"
-        elif clean[1]:
-            cleandata = " Lemm"
+        dataframe = "Small dataframe "
+    if clean[1]:
+        if clean[2] and clean[3]:
+            cleandata = "with Lemm And Stem"
+        elif clean[2]:
+            cleandata = "with Lemm"
         else:
-            cleandata = " Stem"
+            cleandata = "with Stem"
     else:
-        filename = "Not Clean"
-    return filename + cleandata
+        status = "Not Cleaned "
+    return status + dataframe + cleandata
+
+def plot_word_usage(smalldata, clean):
+    data.count_words(smalldata, clean)
+    if smalldata:
+        words = data.df_dict
+    else:
+        words = data.big_df_dict
+    df = pd.DataFrame.from_dict(words, orient=index)
+    plt.plot()
