@@ -216,3 +216,4 @@ def TFIDF(df_bool = True, data_cleaning = True, lemmatize = True, stem = True):
                 word_counter(row['email'], big_df_spam)
             elif row['label'] == 0:
                 word_counter(row['email'], big_df_ham)
+    return df
