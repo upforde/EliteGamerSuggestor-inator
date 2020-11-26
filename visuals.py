@@ -48,7 +48,7 @@ def get_ROC(model, X_test, y_test, clean = None, smalldata = False, vector_type 
 # Plotting the ROC-curve with a 2D-list of ROC-data lists output by get_ROC().
 # Either called immediately by train_model(), or called with a list which has multiple ROC-data lists built up by multiple train_model() calls.
 # Param  : roc_list      = List of ROC-data. 
-# Param  : X_test        = The test-data set which the model uses for validation. Needed for probability predictions.
+# Param  : present       = If true, shows the plotted visuals after they've been plotted.
 # Output : roc_list      = Empties the lists for a more flexible call method.
 def draw_ROC(roc_list, present):
     filename = None
@@ -93,8 +93,9 @@ def get_label(model, i):
 # Param  : cm            = Confusion matrix recieved by train_model() exection.
 # Param  : model         = Classification model used.
 # Param  : clean         = The cleaning parameters the model used on its dataset. Used for labeling of filename.
-# Param  : i             = k-fold numbering.
-# Param  : model         = Model to be named.
+# Param  : show          = If true, shows the plotted visuals after they've been plotted.
+# Param  : smalldata     = Bool variable to know which dataset was used. Used for labeling of filename.
+# Param  : vector_type   = The vectorization form the model used for its bag-of-words approach. Used for labeling of filename.
 # Param  : i             = k-fold numbering.
 def plot_cm(cm, model, clean, show, smalldata, vector_type, i = None):
     data_name = get_file_name(clean, smalldata, vector_type,"CM")
@@ -105,6 +106,13 @@ def plot_cm(cm, model, clean, show, smalldata, vector_type, i = None):
         plt.show()
     plt.clf()
 
+# Function to get create an organized filename.
+# Uses if-conditions to build the filename and then return it.
+# Param  : clean         = The cleaning parameters the model used on its dataset. Used to build the cleaning notations for the filename.
+# Param  : smalldata     = Bool variable to know which dataset was used. Used to denote which dataset is used.
+# Param  : vector_type   = The vectorization form the model used for its bag-of-words approach. Used to denote which vectorization is used.
+# Param  : calltype      = String which notes what type of figure the filename is labelling.
+# Output : String        = Returns a string which will be the filename for the figure when saved.
 def get_file_name(clean, smalldata, vector, calltype):
     cleandata = ""
     dataframe = "B"
