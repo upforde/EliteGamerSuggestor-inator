@@ -48,8 +48,7 @@ def makeDict(df):
 # Param  : clean         = Cleaning list which includes bolean values to be put into the count_word function.
 # Output : feature_ma..  = Feature matrix to be used for training model. A bag-of-words model that counts word occurences.
 def feature_extraction(smalldata, clean):
-    # Gets the dataframe and fills up word counting dictionaries. ¨
-    # Also cleans data.
+    # Gets the dataframe and fills up word counting dictionaries. Also cleans data according to clean parameters.
     df = data.count_words(smalldata, clean[0], clean[1], clean[2])
     # Get correct word dictionary for the dataset we are using.
     if smalldata:
@@ -83,7 +82,7 @@ def feature_extraction(smalldata, clean):
 # First retrieves and cleans a dataframe based on paramters, then creates a vectorizer to perform feature extraction.
 # Second, if n_fold is higher than 2, performs a cross_validation on our dataset. Otherwise, a 1/3 data-split.
 # Third, fits the model sent in with training data and asks it to predict the validation data for the current loop(s).
-# Fourth, based on parameters, output necessary information. Confusion matrix, F1-score, etc. This is where plots are called if asked for.
+# Fourth, based on parameters, output necessary information. Confusion matrix, F1-score, etc. This is where plots are shown and saved if asked for.
 # Lastly, output everything and return either the classifier alone, or the classifier and necessary data for plotting our ROC-curve.
 # Note, if returning a list of data, we have to extend the returning data to an assigned list.
 # Param  : model         = Classification model to be trained and used for predictions and plotting.
@@ -91,11 +90,12 @@ def feature_extraction(smalldata, clean):
 # Param  : clean         = List of three bool values to determine if [0]cleaning, [1]lemmatization, and [2]stemming is to be done.
 # Param  : vector_type   = Vectorization type to be used when performing bag-of-words for training the models.
 # Param  : n_folds       = Integer that determines number of k-folds. If less than 2, performs, 1/3 test/training split.
-# Param  : report        = If true, the function should output everything necessary for the project. Plots, shows, and saves everything to /images. 
-# Param  : collect_roc   = If true, the function should collect and return a second output in the form of a list to be used for drawing the ROC-curve. 
+# Param  : report        = If true, the function should output everything necessary for the project. Plots and saves everything to /Screenshots.
+# Param  : collect_roc   = If true, the function should collect and return a second output in the form of a list to be used for with the draw_roc() function. 
+# Param  : show          = If true, shows the plotted visuals as they're called. This however stops function execution till the window is exited. 
 # Output : model         = Returns the now trained classification model that got sent in from the first parameter.
 # Output : roc_data_list = (Optimal) ROC-curve data to be further pipelined into the ROC-curve plotting function.
-def train_model(model = MultinomialNB(), smalldata = True, clean = [False, False, False], vector_type = CountVectorizer(), n_folds = 0, report = False, collect_roc = False):
+def train_model(model = MultinomialNB(), smalldata = True, clean = [False, False, False], vector_type = CountVectorizer(), n_folds = 0, report = False, collect_roc = False, show = False):
     print_reciept(model, smalldata, clean, vector_type, n_folds)
     print("Fetching dataframe...")
     df = data.count_words(smalldata, clean[0], clean[1], clean[2])
@@ -130,9 +130,8 @@ def train_model(model = MultinomialNB(), smalldata = True, clean = [False, False
             if report:
                 print(f"Classification report for fold {i}: ")
                 print (classification_report(result, y_test))
-                clean.insert(0,smalldata)
-                roc_data_list.append(visuals.get_ROC(model, X_test, y_test, i, clean))
-                visuals.plot_cm(confusion_matrix_total, model, clean)
+                roc_data_list.append(visuals.get_ROC(model, X_test, y_test, clean, smalldata, vector_type, i))
+                visuals.plot_cm(confusion_matrix_total, model, clean, show, smalldata, vector_type, i)
             elif collect_roc and report is not True:
                 roc_data_list.append(visuals.get_ROC(model, X_test, y_test, i))
                 print(f"Score for fold {i} spam-prediction : {score}")
@@ -143,11 +142,11 @@ def train_model(model = MultinomialNB(), smalldata = True, clean = [False, False
                 print(f"Confusion matrix for fold {i}:")
                 print(confusion_matrix_total)
         if report:
-            _ = visuals.draw_ROC(roc_data_list)
+            _ = visuals.draw_ROC(roc_data_list, show)
         print('Average score:', sum(avg_score)/len(avg_score))
     else:
         print("Performing 1/3 test-data split...")
-        X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.33)
+        X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.33, random_state=0)
         if isinstance(model, (MultinomialNB, BernoulliNB, LinearSVC)):
             model.fit(X_train, y_train)
             result = model.predict(X_test)
@@ -159,10 +158,9 @@ def train_model(model = MultinomialNB(), smalldata = True, clean = [False, False
         if report:
             print("Classification report: ")
             print (classification_report(result, y_test))
-            clean.insert(0,smalldata)
-            roc_data_list.append(visuals.get_ROC(model, X_test, y_test, None, clean))
-            _ = visuals.draw_ROC(roc_data_list)
-            visuals.plot_cm(conf_matrix, model, clean)
+            roc_data_list.append(visuals.get_ROC(model, X_test, y_test, clean, smalldata, vector_type))
+            _ = visuals.draw_ROC(roc_data_list, show)
+            visuals.plot_cm(conf_matrix, model, clean, show, smalldata, vector_type)
         elif collect_roc and report is not True:
             roc_data_list.append(visuals.get_ROC(model, X_test, y_test))
             print(f"Score for spam-prediction : {score}")
@@ -177,6 +175,12 @@ def train_model(model = MultinomialNB(), smalldata = True, clean = [False, False
     else:
         return model
 
+# Function to print information for the current training execution. 
+# Prints out model used, if small or big data is used, what type of cleaning is performed, and vector type used for bag-of-words.
+# Uses if-conditions to print out statments.
+# Function does not need to be called, as its sent in with the correct parameters from train_model().
+# Param  : model         = The classification model used.
+# Param  : smalldata     = If true, the small dataframe will be used. Otherwise big dataframe will be used.
 def print_reciept(model, smalldata, clean, vector_type, n_folds):
     print(" ")
     print(" ")
@@ -207,15 +211,20 @@ def print_reciept(model, smalldata, clean, vector_type, n_folds):
 
 # These are just to give an idea on how to use the function.
 # Permutations are, however, commented out at the bottom if one would like to try and run them. :)
-
+"""
 print("Small data-set example.")
 print("Cleaning with stemming.")
-clean_param = [True, False, True]
+#clean_param = [True, False, True]
+clean_param = [False, False, False]
 roc_list = []
-model_mnb = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True)
-model_mnb_4fold, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 4, False, True)
+#model_mnb = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True)
+#model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True)
+#model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True)
+#model_mnb_4fold, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 4, False, True)
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), True, clean_param, TfidfVectorizer(), 0, True, True)
+clean_param = [True, True, True]
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), True, clean_param, TfidfVectorizer(), 0, True, True)
 roc_list = visuals.draw_ROC(roc_list)
 
 print("Big data-set example.")
@@ -223,44 +232,40 @@ print("Cleaning with Lemmatization...")
 
 model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True)
 model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True)
-
-
+"""
 
 """
+print("All permutations with CountVectorizer...")
 print("Small data-set permutations.")
 print("No cleaning.")
 
 clean_param = [False, False, False]
 roc_list = []
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True, False)
 
 print("Lemmitazation, no stemming.")
 clean_param = [True, True, False]
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True, False)
 
 print("No lemmitazation, stemming.")
 clean_param = [True, False, True]
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True, False)
 
 print("Cleaning with lemmatization and stemming.")
 clean_param = [True, True, True]
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, CountVectorizer(), 0, True, True, False)
 
 
 # ========================================
@@ -273,34 +278,153 @@ print("No cleaning.")
 clean_param = [False, False, False]
 roc_list = []
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True, False)
 
-print("Lemmitazation, not stemming.")
+print("Lemmitazation, no stemming.")
 clean_param = [True, True, False]
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True, False)
 
 print("No lemmitazation, stemming.")
 clean_param = [True, False, True]
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True, False)
 
 print("Cleaning with lemmatization and stemming.")
 clean_param = [True, True, True]
 
-model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True)
-model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True)
-model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True)
-roc_list = visuals.draw_ROC(roc_list)
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, CountVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, CountVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, CountVectorizer(), 0, True, True, False)
+
+
+#=======================================================
+
+
+print("All permutations with tfidf...")
+print("Small data-set permutations.")
+print("No cleaning.")
+
+clean_param = [False, False, False]
+roc_list = []
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Lemmitazation, no stemming.")
+clean_param = [True, True, False]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("No lemmitazation, stemming.")
+clean_param = [True, False, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Cleaning with lemmatization and stemming.")
+clean_param = [True, True, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), True, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=10000), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+
+# ========================================
+
+
+print("Big data-set permutations.")
+
+print("No cleaning.")
+
+clean_param = [False, False, False]
+roc_list = []
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Lemmitazation, no stemming.")
+clean_param = [True, True, False]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("No lemmitazation, stemming.")
+clean_param = [True, False, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Cleaning with lemmatization and stemming.")
+clean_param = [True, True, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+model_bnb, roc_list[len(roc_list):] = train_model(BernoulliNB(), False, clean_param, TfidfVectorizer(binary=True), 0, True, True, False)
+model_svm, roc_list[len(roc_list):] = train_model(LinearSVC(max_iter=100000), False, clean_param, TfidfVectorizer(), 0, True, True, False)
 """
+
+
+print("All permutations with tfidf...")
+print("Small data-set permutations.")
+print("No cleaning.")
+
+clean_param = [False, False, False]
+roc_list = []
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Lemmitazation, no stemming.")
+clean_param = [True, True, False]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("No lemmitazation, stemming.")
+clean_param = [True, False, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Cleaning with lemmatization and stemming.")
+clean_param = [True, True, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), True, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+
+# ========================================
+
+
+print("Big data-set permutations.")
+
+print("No cleaning.")
+
+clean_param = [False, False, False]
+roc_list = []
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Lemmitazation, no stemming.")
+clean_param = [True, True, False]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("No lemmitazation, stemming.")
+clean_param = [True, False, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), False, clean_param, TfidfVectorizer(), 0, True, True, False)
+
+print("Cleaning with lemmatization and stemming.")
+clean_param = [True, True, True]
+
+model_mnb, roc_list[len(roc_list):] = train_model(MultinomialNB(alpha=0.0), False, clean_param, TfidfVectorizer(), 0, True, True, False)
