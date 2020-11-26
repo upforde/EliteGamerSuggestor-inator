@@ -94,7 +94,7 @@ There exists a few uncommented example lines close to the bottom to get a bearin
 The module for running the perceptron code is (predictibly) the **perceptron.py** file. The module can pe ran normally as
 any other python file, but one also can send in arguments. 
 
-python perceptron *<small>* *<itr>* *<lc>* *<points_num>* *<k_folds>*
+python perceptron.py *<small>* *<itr>* *<lc>* *<points_num>* *<k_folds>*
 
 - **small**:      Write "small" to run the perceptron with the small data set, and "big" to run it with the big dataset.
                   Default is small.
