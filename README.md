@@ -79,7 +79,7 @@ There exists a few uncommented example lines close to the bottom to get a bearin
 1. Comment out line 251 to line 266 by wrapping the lines inbetween like so:
 ```
 """
-*...some code here...*
+...some code here...
 
 """
 ```
