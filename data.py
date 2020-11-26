@@ -1,6 +1,6 @@
 # Data retrieval
 import pandas as pd
-import os
+import os, math
 
 # Natural language processing tookit
 import nltk.stem 
@@ -65,20 +65,14 @@ def get_big_df():
 stop_words = set(stopwords.words('english'))
 
 # Number of spam and ham emails in the dataset for easy retrieval
-def num_spam(is_df = True):
-    if is_df:
+def num_spam(df):
         df['label'].value_counts()[0]
-    else:
-        big_df['label'].value_counts()[0]
 
-def num_ham(is_df = True):
-    if is_df:        
+def num_ham(df):
         df['label'].value_counts()[1]
-    else:
-        big_df['label'].value_counts()[1]
         
-def num_total(is_df = True): 
-    return num_ham(is_df) + num_spam(is_df)
+def num_total(df): 
+    return num_ham(df) + num_spam(df)
 
 # Dictionary with most often occuring words for spam and ham emails
 # Not proud of this, but trying to keep the work of changing files using this one to the minimum
@@ -193,3 +187,32 @@ def order_words(df_bool = True):
         return sorted(df_ham.items(), key=lambda x: x[1], reverse = True) , sorted(df_spam.items(), key=lambda x: x[1], reverse = True)
     else:
         return sorted(big_df_ham.items(), key=lambda x: x[1], reverse = True) , sorted(big_df_spam.items(), key=lambda x: x[1], reverse = True)
+
+def TFIDF(df_bool = True, data_cleaning = True, lemmatize = True, stem = True):
+    if df_bool: df = pd.read_csv('data/emails.csv')
+    else: df = get_big_df()
+
+    if data_cleaning: clean_data(df, 1, lemmatize, stem)
+    
+    N = df['label'].value_counts()[1] + df['label'].value_counts()[0]
+    
+    def word_counter(email, dic):
+        for word in str(email).split():
+            if word in dic:
+                dic[word] = math.log(N / ((math.e**dic[word] * N ) + 1) )
+                return
+            else:
+                dic[word] = math.log(N/1)
+    
+    if df_bool:
+        for _, row in df.iterrows():
+            if row['label'] == 1: 
+                word_counter(row['email'], df_spam)
+            elif row['label'] == 0:
+                word_counter(row['email'], df_ham)
+    else:
+        for _, row in df.iterrows():
+            if row['label'] == 1: 
+                word_counter(row['email'], big_df_spam)
+            elif row['label'] == 0:
+                word_counter(row['email'], big_df_ham)
