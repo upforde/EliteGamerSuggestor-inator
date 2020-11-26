@@ -89,8 +89,13 @@ def get_label(model, i):
         label = f"{model.__class__.__name__} with fold {i}"
     return label
 
-# Function that plots a confusion matrix.
-
+# Function that plots a confusion matrix and saves it.
+# Param  : cm            = Confusion matrix recieved by train_model() exection.
+# Param  : model         = Classification model used.
+# Param  : clean         = The cleaning parameters the model used on its dataset. Used for labeling of filename.
+# Param  : i             = k-fold numbering.
+# Param  : model         = Model to be named.
+# Param  : i             = k-fold numbering.
 def plot_cm(cm, model, clean, show, smalldata, vector_type, i = None):
     data_name = get_file_name(clean, smalldata, vector_type,"CM")
     df_cm = pd.DataFrame(cm, index = ["Real Ham", "Real Spam"], columns = ["Guessed Ham", "Guessed Spam"])
