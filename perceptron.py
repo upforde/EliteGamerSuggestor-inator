@@ -108,13 +108,15 @@ def set_params():
     return big, itr, lc, points_num, k_folds
 
 # Function that plots a confusion matrix
-def plot_cm(cm):
+def plot_cm(cm, title):
     df_cm = pd.DataFrame(cm, index = ["Real Ham", "Real Spam"], columns = ["Guessed Ham", "Guessed Spam"])
     sn.heatmap(df_cm, annot=True, fmt="d", cmap=sn.color_palette("rocket_r", as_cmap=True))
-    plt.show()
+    plt.savefig("Screenshots/Perceptron" + title + ".png")
+    plt.clf()
+    #plt.show()
 
 # Function that plots an ROC curve
-def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_set, testing_set, words_spam, words_ham):
+def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_set, testing_set, words_spam, words_ham, title):
     print(f"Creating the ROC graph with {num_points} points. This may take a while...")
     # Initiate the arrays that will hold the true positive and true 
     # negative rates
@@ -158,7 +160,9 @@ def plot_roc(ire, lc, num_points, lowest_threshold, highest_threshold, training_
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
     plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
-    plt.show()
+    plt.savefig("Screenshots/Perceptron" + title + ".png")
+    plt.clf()
+    #plt.show()
     
 # Dumb function that fixes the order of the points
 def order_points(x, y):
@@ -237,6 +241,8 @@ def create_folds(k_folds, x_train, y_train):
 #region -------------- running the code --------------------
 # Setting the initial parameters
 small, itr, lc, points_num, k_folds = set_params()
+# Setting up the title for the plots
+t = "/S_" if small else "/B_"
 
 #region Getting the uncleaned dataset from data.py
 df_u = data.count_words(small, False)
@@ -251,6 +257,13 @@ testing_set_u = create_dictionary(x_test_u, y_test_u)
 
 #region Getting the uncleaned dataset using TFIDF
 df_u_tfidf = data.TFIDF(small, False)
+words_ham_u_tfidf, words_spam_u_tfidf = data.order_words(small)
+x_train_u_tfidf, x_test_u_tfidf, y_train_u_tfidf, y_test_u_tfidf = train_test_split(df_u_tfidf['email'], df_u_tfidf['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_u_tfidf, words_spam_u_tfidf = dict(words_ham_u_tfidf), dict(words_spam_u_tfidf)
+training_set_u_tfidf = create_dictionary(x_train_u_tfidf, y_train_u_tfidf)
+testing_set_u_tfidf = create_dictionary(x_test_u_tfidf, y_test_u_tfidf)
 #endregion
 
 #region Getting the cleaned data from data.py with only lemmatization active
@@ -264,6 +277,17 @@ training_set_cl = create_dictionary(x_train_cl, y_train_cl)
 testing_set_cl = create_dictionary(x_test_cl, y_test_cl)
 #endregion
 
+#region Getting the cleaned data from data.py with only lemmatization active using TFIDF
+df_cl_tfidf = data.TFIDF(small, True, True, False)
+words_ham_cl_tfidf, words_spam_cl_tfidf = data.order_words(small)
+x_train_cl_tfidf, x_test_cl_tfidf, y_train_cl_tfidf, y_test_cl_tfidf = train_test_split(df_cl_tfidf['email'], df_cl_tfidf['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_cl_tfidf, words_spam_cl_tfidf = dict(words_ham_cl_tfidf), dict(words_spam_cl_tfidf)
+training_set_cl_tfidf = create_dictionary(x_train_cl_tfidf, y_train_cl_tfidf)
+testing_set_cl_tfidf = create_dictionary(x_test_cl_tfidf, y_test_cl_tfidf)
+#endregion
+
 #region Getting the cleaned data from data.py with only stemmer active
 df_cs = data.count_words(small, True, False, True)
 words_ham_cs, words_spam_cs = data.order_words(small)
@@ -273,6 +297,17 @@ x_train_cs, x_test_cs, y_train_cs, y_test_cs = train_test_split(df_cs['email'], 
 words_ham_cs, words_spam_cs = dict(words_ham_cs), dict(words_spam_cs)
 training_set_cs = create_dictionary(x_train_cs, y_train_cs)
 testing_set_cs = create_dictionary(x_test_cs, y_test_cs)
+#endregion
+
+#region Getting the cleaned data from data.py with only stemmer active using TFIDF
+df_cs_tfidf = data.TFIDF(small, True, False, True)
+words_ham_cs_tfidf, words_spam_cs_tfidf = data.order_words(small)
+x_train_cs_tfidf, x_test_cs_tfidf, y_train_cs_tfidf, y_test_cs_tfidf = train_test_split(df_cs_tfidf['email'], df_cs_tfidf['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_cs_tfidf, words_spam_cs_tfidf = dict(words_ham_cs_tfidf), dict(words_spam_cs_tfidf)
+training_set_cs_tfidf = create_dictionary(x_train_cs_tfidf, y_train_cs_tfidf)
+testing_set_cs_tfidf = create_dictionary(x_test_cs_tfidf, y_test_cs_tfidf)
 #endregion
 
 #region Getting the cleaned data from data.py with both lemmatization and stemmer active
@@ -286,59 +321,101 @@ training_set_cls = create_dictionary(x_train_cls, y_train_cls)
 testing_set_cls = create_dictionary(x_test_cls, y_test_cls)
 #endregion
 
+#region Getting the cleaned data from data.py with both lemmatization and stemmer active using TFIDF
+df_cls_tfidf = data.TFIDF(small, True, True, True)
+words_ham_cls_tfidf, words_spam_cls_tfidf = data.order_words(small)
+x_train_cls_tfidf, x_test_cls_tfidf, y_train_cls_tfidf, y_test_cls_tfidf = train_test_split(df_cls_tfidf['email'], df_cls_tfidf['label'], test_size = 1/3, random_state = 50)
+# Converting the data from data.py into dictionaries. This choice was done mainly
+# because the perceptron seemed easier to implement with the use of dictionaries.
+words_ham_cls_tfidf, words_spam_cls_tfidf = dict(words_ham_cls_tfidf), dict(words_spam_cls_tfidf)
+training_set_cls_tfidf = create_dictionary(x_train_cls, y_train_cls_tfidf)
+testing_set_cls_tfidf = create_dictionary(x_test_cls_tfidf, y_test_cls_tfidf)
+#endregion
+
 #region The weight dictionaries are instanciated, before being sent into the learn_weights function
 weights_u = {}
+weights_u_tfidf = {}
 weights_cl = {}
+weights_cl_tfidf = {}
 weights_cs = {}
+weights_cs_tfidf = {}
 weights_cls = {}
+weights_cls_tfidf =  {}
 #endregion
 
 #region Running the training algorithm with the provided parameters.
 lowest_threshold_u, highest_threshold_u = learn_weights(weights_u, training_set_u, words_spam_u, words_ham_u, itr, lc, 0, True)
+lowest_threshold_u_tfidf, highest_threshold_u_tfidf = learn_weights(weights_u_tfidf, training_set_u_tfidf, words_ham_u_tfidf, words_spam_u_tfidf, itr, lc, 0, True)
 lowest_threshold_cl, highest_threshold_cl = learn_weights(weights_cl, training_set_cl, words_spam_cl, words_ham_cl, itr, lc, 0, True)
+lowest_threshold_cl_tfidf, highest_threshold_cl_tfidf = learn_weights(weights_cl_tfidf, training_set_cl_tfidf, words_spam_cl_tfidf, words_ham_cl_tfidf, itr, lc, 0, True)
 lowest_threshold_cs, highest_threshold_cs = learn_weights(weights_cs, training_set_cs, words_spam_cs, words_ham_cs, itr, lc, 0, True)
+lowest_threshold_cs_tfidf, highest_threshold_cs_tfidf = learn_weights(weights_cs_tfidf, training_set_cs_tfidf, words_spam_cs_tfidf, words_ham_cs_tfidf, itr, lc, 0, True)
 lowest_threshold_cls, highest_threshold_cls = learn_weights(weights_cls, training_set_cls, words_spam_cls, words_ham_cls, itr, lc, 0, True)
+lowest_threshold_cls_tfidf, highest_threshold_cls_tfidf = learn_weights(weights_cls_tfidf, training_set_cls_tfidf, words_spam_cls_tfidf, words_ham_cls_tfidf, itr, lc, 0, True)
 #endregion
 
 #region Testing the weights and plotting the confusion matrixes
 tp_u, tn_u, fp_u, fn_u = test_weights(weights_u, testing_set_u, words_spam_u, words_ham_u)
 print("The model trained on an uncleaned dataset performed with an accuracy of %.2f%s\n" % ((tp_u+tn_u)/(tp_u+tn_u+fp_u+fn_u), '%'))
-plot_cm([[tp_u, fp_u],[fn_u, tn_u]])
+plot_cm([[tp_u, fp_u],[fn_u, tn_u]], t + "CM_U")
+
+tp_u_tfidf, tn_u_tfidf, fp_u_tfidf, fn_u_tfidf = test_weights(weights_u_tfidf, testing_set_u_tfidf, words_spam_u_tfidf, words_ham_u_tfidf)
+print("The model trained on an uncleaned dataset performed with an accuracy of %.2f%s\n" % ((tp_u_tfidf+tn_u_tfidf)/(tp_u_tfidf+tn_u_tfidf+fp_u_tfidf+fn_u_tfidf), '%'))
+plot_cm([[tp_u_tfidf, fp_u_tfidf],[fn_u_tfidf, tn_u_tfidf]], t + "CM_U_TFIDF")
 
 tp_cl, tn_cl, fp_cl, fn_cl = test_weights(weights_cl, testing_set_cl, words_spam_cl, words_ham_cl)
 print("The model trained on a cleaned dataset with lemmatization active performed with an accuracy of %.2f%s\n" % ((tp_cl+tn_cl)/(tp_cl+tn_cl+fp_cl+fn_cl), '%'))
-plot_cm([[tp_cl, fp_cl],[fn_cl, tn_cl]])
+plot_cm([[tp_cl, fp_cl],[fn_cl, tn_cl]], t + "CM_CL")
+
+tp_cl_tfidf, tn_cl_tfidf, fp_cl_tfidf, fn_cl_tfidf = test_weights(weights_cl_tfidf, testing_set_cl_tfidf, words_spam_cl_tfidf, words_ham_cl_tfidf)
+print("The model trained on a cleaned dataset with lemmatization active using TFIDF performed with an accuracy of %.2f%s\n" % ((tp_cl_tfidf+tn_cl_tfidf)/(tp_cl_tfidf+tn_cl_tfidf+fp_cl_tfidf+fn_cl_tfidf), '%'))
+plot_cm([[tp_cl_tfidf, fp_cl_tfidf],[fn_cl_tfidf, tn_cl_tfidf]], t + "CM_CL_TFIDF")
 
 tp_cs, tn_cs, fp_cs, fn_cs = test_weights(weights_cs, testing_set_cs, words_spam_cs, words_ham_cs)
 print("The model trained on a cleaned dataset with stammer active performed with an accuracy of %.2f%s\n" % ((tp_cs+tn_cs)/(tp_cs+tn_cs+fp_cs+fn_cs), '%'))
-plot_cm([[tp_cs, fp_cs],[fn_cs, tn_cs]])
+plot_cm([[tp_cs, fp_cs],[fn_cs, tn_cs]], t + "CM_CS")
+
+tp_cs_tfidf, tn_cs_tfidf, fp_cs_tfidf, fn_cs_tfidf = test_weights(weights_cs_tfidf, testing_set_cs_tfidf, words_spam_cs_tfidf, words_ham_cs_tfidf)
+print("The model trained on a cleaned dataset with stammer active using TFIDF performed with an accuracy of %.2f%s\n" % ((tp_cs_tfidf+tn_cs_tfidf)/(tp_cs_tfidf+tn_cs_tfidf+fp_cs_tfidf+fn_cs_tfidf), '%'))
+plot_cm([[tp_cs_tfidf, fp_cs_tfidf],[fn_cs_tfidf, tn_cs_tfidf]], t + "CM_CS_TFIDF")
 
 tp_cls, tn_cls, fp_cls, fn_cls = test_weights(weights_cls, testing_set_cls, words_spam_cls, words_ham_cls)
 print("The model trained on a cleaned dataset with both lemmatization and stammer active performed with an accuracy of %.2f%s\n" % ((tp_cls+tn_cls)/(tp_cls+tn_cls+fp_cls+fn_cls), '%'))
-plot_cm([[tp_cls, fp_cls],[fn_cls, tn_cls]])
+plot_cm([[tp_cls, fp_cls],[fn_cls, tn_cls]], t + "CM_CLS")
 
-#region Testing an uncleaned testing set on weights that were derived from a cleaned training set
-tp_c_u, tn_c_u, fp_c_u, fn_c_u = test_weights(weights_cls, testing_set_u, words_spam_cls, words_ham_cls)
-print("On an uncleaned testing set, the model trained on a cleaned dataset with both lemmatization and stammer active preformed with an accuracy of %.2f%s\n" % ((tp_c_u+tn_c_u)/(tp_c_u+tn_c_u+fp_c_u+fn_c_u), '%'))
-plot_cm([[tp_c_u, fp_c_u],[fn_c_u, tn_c_u]])
-#endregion
+tp_cls_tfidf, tn_cls_tfidf, fp_cls_tfidf, fn_cls_tfidf = test_weights(weights_cls_tfidf, testing_set_cls_tfidf, words_spam_cls_tfidf, words_ham_cls_tfidf)
+print("The model trained on a cleaned dataset with both lemmatization and stammer active using TFIDF performed with an accuracy of %.2f%s\n" % ((tp_cls_tfidf+tn_cls_tfidf)/(tp_cls_tfidf+tn_cls_tfidf+fp_cls_tfidf+fn_cls_tfidf), '%'))
+plot_cm([[tp_cls_tfidf, fp_cls_tfidf],[fn_cls_tfidf, tn_cls_tfidf]], t + "CM_CLS_TFIDF")
+
 #endregion
 
 #region Preforming cross validation on the perceptron
 acc_u, std_u = cross_validation(k_folds, itr, lc, x_train_u, y_train_u, words_spam_u, words_ham_u)
 print("In cross validation the model trained on an uncleaned dataset performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_u, '%', std_u))
+acc_u_tfidf, std_u_tfidf = cross_validation(k_folds, itr, lc, x_train_u_tfidf, y_train_u_tfidf, words_spam_u_tfidf, words_ham_u_tfidf)
+print("In cross validation the model trained on an uncleaned dataset using TFIDF performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_u, '%', std_u))
 acc_cl, std_cl = cross_validation(k_folds, itr, lc, x_train_cl, y_train_cl, words_spam_cl, words_ham_cl)
 print("In cross validation the model trained on a cleaned dataset with lemmatization active performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cl, '%', std_cl))
+acc_cl_tfidf, std_cl_tfidf = cross_validation(k_folds, itr, lc, x_train_cl_tfidf, y_train_cl_tfidf, words_spam_cl_tfidf, words_ham_cl_tfidf)
+print("In cross validation the model trained on a cleaned dataset with lemmatization active using TFIDF performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cl, '%', std_cl))
 acc_cs, std_cs = cross_validation(k_folds, itr, lc, x_train_cs, y_train_cs, words_spam_cs, words_ham_cs)
 print("In cross validation the model trained on a cleaned dataset with stammer active performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cs, '%', std_cs))
+acc_cs_tfidf, std_cs_tfidf = cross_validation(k_folds, itr, lc, x_train_cs_tfidf, y_train_cs_tfidf, words_spam_cs_tfidf, words_ham_cs_tfidf)
+print("In cross validation the model trained on a cleaned dataset with stammer active using TFIDF performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cs, '%', std_cs))
 acc_cls, std_cls = cross_validation(k_folds, itr, lc, x_train_cls, y_train_cls, words_spam_cls, words_ham_cls)
-print("In cross validation the model trained on a cleaned dataset with both lemmatization and stammer performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cls, '%', std_cls))
+print("In cross validation the model trained on a cleaned dataset with both lemmatization and stammer active performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cls, '%', std_cls))
+acc_cls_tfidf, std_cls_tfidf = cross_validation(k_folds, itr, lc, x_train_cls_tfidf, y_train_cls_tfidf, words_spam_cls_tfidf, words_ham_cls_tfidf)
+print("In cross validation the model trained on a cleaned dataset with both lemmatization and stammer active using TFIDF performed with an accuracy of %.2f%s\nwith a standard deviation of +- %.2f\n" % (acc_cls, '%', std_cls))
 #endregion
 
 #region Plotting the ROC curves.
-plot_roc(itr, lc, points_num, lowest_threshold_u, highest_threshold_u, training_set_u, testing_set_u, words_spam_u, words_ham_u)
-plot_roc(itr, lc, points_num, lowest_threshold_cl, highest_threshold_cl, training_set_cl, testing_set_cl, words_spam_cl, words_ham_cl)
-plot_roc(itr, lc, points_num, lowest_threshold_cs, highest_threshold_cs, training_set_cs, testing_set_cs, words_spam_cs, words_ham_cs)
-plot_roc(itr, lc, points_num, lowest_threshold_cls, highest_threshold_cls, training_set_cls, testing_set_cls, words_spam_cls, words_ham_cls)
+plot_roc(itr, lc, points_num, lowest_threshold_u, highest_threshold_u, training_set_u, testing_set_u, words_spam_u, words_ham_u, t + "ROC_U")
+plot_roc(itr, lc, points_num, lowest_threshold_u_tfidf, highest_threshold_u_tfidf, training_set_u_tfidf, testing_set_u_tfidf, words_spam_u_tfidf, words_ham_u_tfidf, t + "ROC_U_TFIDF")
+plot_roc(itr, lc, points_num, lowest_threshold_cl, highest_threshold_cl, training_set_cl, testing_set_cl, words_spam_cl, words_ham_cl, t + "ROC_CL")
+plot_roc(itr, lc, points_num, lowest_threshold_cl_tfidf, highest_threshold_cl_tfidf, training_set_cl_tfidf, testing_set_cl_tfidf, words_spam_cl_tfidf, words_ham_cl_tfidf, t + "ROC_CL_TFIDF")
+plot_roc(itr, lc, points_num, lowest_threshold_cs, highest_threshold_cs, training_set_cs, testing_set_cs, words_spam_cs, words_ham_cs, t + "ROC_CS")
+plot_roc(itr, lc, points_num, lowest_threshold_cs_tfidf, highest_threshold_cs_tfidf, training_set_cs_tfidf, testing_set_cs_tfidf, words_spam_cs_tfidf, words_ham_cs_tfidf, t + "ROC_CS_TFIDF")
+plot_roc(itr, lc, points_num, lowest_threshold_cls, highest_threshold_cls, training_set_cls, testing_set_cls, words_spam_cls, words_ham_cls, t + "ROC_CLS")
+plot_roc(itr, lc, points_num, lowest_threshold_cls_tfidf, highest_threshold_cls_tfidf, training_set_cls_tfidf, testing_set_cls_tfidf, words_spam_cls_tfidf, words_ham_cls_tfidf, t + "ROC_CLS_TFIDF")
 #endregion
 #endregion
