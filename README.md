@@ -106,3 +106,6 @@ python perceptron.py *<small>* *<itr>* *<lc>* *<points_num>* *<k_folds>*
                   Default is 10 points
 - **k_folds**:    Specify the number of folds in the cross-validation 
                   Default is 4 folds
+
+The results that we have discussed in the project report were achieved by using the defualt parameters, and only changing
+the **small** parameter to either run the perceptron on the small data set or the large data set.
