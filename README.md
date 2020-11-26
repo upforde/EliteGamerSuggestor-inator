@@ -44,7 +44,7 @@ A Machine Learning project for TDT4173 - Machine Learning done by
 - **visuals.py**, The python file which includes plotting functions for the methods.py file.
 
 
-#### How to run the code for Multinomial Naive Bayes, Bernoulli Naive Bayes, and Support Vector Machines. :capital_abcd:
+### How to run the code for Naive Bayes and SVM. :capital_abcd:
 
 The main module for running Multinomial Naive Bayes, Bernoulli Naive Bayes, and Support Vector Machines is the **methods.py** file.
 Each function is commented with an explaination for what it does, and what parameters it takes.
@@ -70,7 +70,7 @@ def train_model(model, smalldata, clean, vector_type, n_folds, report, collect_r
 ```
 There exists a few uncommented example lines close to the bottom to get a bearing on how to use it.
 
-### To get the same results as given in the project report, do the following:
+#### To get the same results as given in the project report, do the following:
 
 **For methods.py:**
 1. Comment out line 251 to line 266 by wrapping the lines inbetween like so:
