@@ -1,6 +1,7 @@
 # Data retrieval
 import pandas as pd
 import os, math
+from decimal import *
 
 # Natural language processing tookit
 import nltk.stem 
@@ -199,7 +200,8 @@ def TFIDF(df_bool = True, data_cleaning = True, lemmatize = True, stem = True):
     def word_counter(email, dic):
         for word in str(email).split():
             if word in dic:
-                dic[word] = math.log(N / ((math.e**dic[word] * N ) + 1) )
+                getcontext().prec = 100
+                dic[word] = float(Decimal.log10(N/(Decimal(math.e)**Decimal(dic[word]) * N) + 1))
                 return
             else:
                 dic[word] = math.log(N/1)
