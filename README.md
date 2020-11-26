@@ -91,3 +91,18 @@ There exists a few uncommented example lines close to the bottom to get a bearin
 5. Hesitate. 
 
 #### How to run the code for the Perceptron :eyes:
+The module for running the perceptron code is (predictibly) the **perceptron.py** file. The module can pe ran normally as
+any other python file, but one also can send in arguments. 
+
+python perceptron *<small>* *<itr>* *<lc>* *<points_num>* *<k_folds>*
+
+- **small**:      Write "small" to run the perceptron with the small data set, and "big" to run it with the big dataset.
+                  Default is small.
+- **itr**:        Specify the number of times the perceptron learning algorithm iterates. 
+                  Default is 20 iterations.
+- **lc**:         Specify the learning constant of the learning algorithm. 
+                  Default is 0.1
+- **points_num**: Specify the number of points the ROC curves will have
+                  Default is 10 points
+- **k_folds**:    Specify the number of folds in the cross-validation 
+                  Default is 4 folds
