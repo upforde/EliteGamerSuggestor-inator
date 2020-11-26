@@ -6,7 +6,7 @@ A Machine Learning project for TDT4173 - Machine Learning done by
 - Aleksander Simmersholm.
 
 
-## Directory :file_folder:
+### Directory :file_folder:
 
 - Screenshots :open_file_folder:
   - BernoulliNB 
@@ -30,7 +30,7 @@ A Machine Learning project for TDT4173 - Machine Learning done by
 - visuals.py
 
 
-## Directory legend :arrow_right_hook:
+### Directory legend :arrow_right_hook:
 
 - **Screenshots** is the directory of all images produced by the code files which are discussed and used in the project report.
   - Each classifer has their own folder which includes the confusion matrices and ROC-curve plots with all possible permutations.
@@ -44,7 +44,7 @@ A Machine Learning project for TDT4173 - Machine Learning done by
 - **visuals.py**, The python file which includes plotting functions for the methods.py file.
 
 
-## How to run the code for Multinomial Naive Bayes, Bernoulli Naive Bayes, and Support Vector Machines. :capital_abcd:
+### How to run the code for Multinomial Naive Bayes, Bernoulli Naive Bayes, and Support Vector Machines. :capital_abcd:
 
 The main module for running Multinomial Naive Bayes, Bernoulli Naive Bayes, and Support Vector Machines is the **methods.py** file.
 Each function is commented with an explaination for what it does, and what parameters it takes.
