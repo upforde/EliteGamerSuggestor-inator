@@ -53,6 +53,7 @@ However, the only method one needs to use is the *main method*, which is the **t
 ### How to use the train_model() in methods.py
 
 The train_model() trains a given model accordingly with numerous parameters to allow permutations. 
+
 A except from the methods.py comment:
 ```
 Param  : model         = Classification model to be trained and used for predictions and plotting.
@@ -70,9 +71,9 @@ def train_model(model, smalldata, clean, vector_type, n_folds, report, collect_r
 ```
 There exists a few uncommented example lines close to the bottom to get a bearing on how to use it.
 
-#### To get the same results as given in the project report, do the following:
+#### To get the same results as given in the project report for NB and SVM, do the following:
 
-**For methods.py:**
+
 1. Comment out line 251 to line 266 by wrapping the lines inbetween like so:
 ```
 """
