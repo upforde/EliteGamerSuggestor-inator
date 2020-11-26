@@ -1,6 +1,8 @@
 ### Spam-classification using Naive Bayes, Support Vector Machines, or Perceptron :e-mail:
 
-A Machine Learning project for "TDT4173 - Machine Learning" at NTNU: Norwegian University of Science and Technology done by: 
+A Machine Learning project for "TDT4173 - Machine Learning" at Norwegian University of Science and Technology. 
+
+This project was done by: 
 - Piri Babayev
 - Danilas Miscenko
 - Aleksander Simmersholm.
@@ -56,7 +58,7 @@ However, the only method one needs to use is the *main method*, which is the **t
 
 The train_model() trains a given model accordingly with numerous parameters to allow permutations. 
 
-**A except from the methods.py comment:**
+**An except from the methods.py comment:**
 ```
 Param  : model         = Classification model to be trained and used for predictions and plotting.
 Param  : smalldata     = If true, the small dataframe will be used. Otherwise big dataframe will be used.
