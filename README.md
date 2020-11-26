@@ -1,4 +1,4 @@
-### :e-mail: Spam-classification using Naive Bayes, Support Vector Machines, or Perceptron :e-mail:
+### Spam-classification using Naive Bayes, Support Vector Machines, or Perceptron :e-mail:
 
 A Machine Learning project for TDT4173 - Machine Learning done by: 
 - Piri Babayev
