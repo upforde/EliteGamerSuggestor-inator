@@ -1,6 +1,7 @@
 # Importing the data module
 import data
 import numpy as np
+import visuals
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import GaussianNB

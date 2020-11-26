@@ -67,10 +67,10 @@ stop_words = set(stopwords.words('english'))
 
 # Number of spam and ham emails in the dataset for easy retrieval
 def num_spam(df):
-        df['label'].value_counts()[0]
+    df['label'].value_counts()[0]
 
-def num_ham(df):
-        df['label'].value_counts()[1]
+def num_ham(df):       
+    df['label'].value_counts()[1]
         
 def num_total(df): 
     return num_ham(df) + num_spam(df)
@@ -81,9 +81,11 @@ def num_total(df):
 # Consist of value-key pair word: total_used 
 df_spam = {} 
 df_ham = {}
+df_dict = {}
 
 big_df_spam = {}
 big_df_ham = {}
+big_df_dict = {}
 
 # Returns a tuple with the email and its label at the index
 def get_row(df, index):
@@ -159,9 +161,11 @@ def count_words(df_bool = True, data_cleaning = True, lemmatize = True, stem = T
             else:
                 words_dict[word] = 1
 
-    def iterate(dic_spam, dic_ham, database):
+    def iterate(dic_spam, dic_ham, database, dic = None):
         # Looping through each item in the emails dataset
         for index, row in database.iterrows():
+            if dic is not None:
+                word_counter(row['email'], dic )
             # Check the label first
             if row['label'] == 1: 
                 word_counter(row['email'], dic_spam )
@@ -173,11 +177,13 @@ def count_words(df_bool = True, data_cleaning = True, lemmatize = True, stem = T
     if df_bool:
         df_ham.clear()
         df_spam.clear()
-        iterate(df_spam, df_ham, df)
+        df_dict.clear()
+        iterate(df_spam, df_ham, df, df_dict)
     else:
         big_df_ham.clear()
         big_df_spam.clear()
-        iterate(big_df_spam, big_df_ham, df)
+        big_df_dict.clear()
+        iterate(big_df_spam, big_df_ham, df, big_df_dict)
     return df
         
 # Orders the words and return an ordered list 
